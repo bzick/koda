@@ -1,22 +1,50 @@
 <?php
 
-namespace SmartInvoker;
+namespace Koda;
+use Koda\Error\InvalidArgumentException;
 
 /**
  * Data verification
  * (count 7, value >7, value <=8, count 1..4, file, date %Y-%m-%d, keyword)
- * @package Viron
  */
-class Verify {
+class Filter {
     public $context;
+    public $injector;
+    public $factory;
 
     public function __construct($context) {
         $this->context = $context;
     }
 
+	public function setInjector(callable $injector) {
+		$this->injector = $injector;
+		return $this;
+	}
+
+	public function setFactory(callable $factory) {
+		$this->factory = $factory;
+		return $this;
+	}
+
+	public function injection(ArgumentInfo $info, $value = null) {
+		try {
+			return call_user_func($this->injector, $info, $value);
+		} catch (\Exception $e) {
+			throw new InvalidArgumentException("Injection failed: ".$e->getMessage(), $info, $e, 'inject');
+		}
+	}
+
+	public function factory(ArgumentInfo $info, $value = null) {
+		try {
+			return call_user_func($this->factory, $info, $value);
+		} catch (\Exception $e) {
+			throw new InvalidArgumentException("Injection failed: ".$e->getMessage(), $info, $e, 'inject');
+		}
+	}
+
     public function __call($name, $params) {
-        if(method_exists($this->context, $name.'Validator')) {
-            return call_user_func_array(array($this->context, $name.'Validator'), $params);
+        if($this->context && method_exists($this->context, $name)) {
+            return call_user_func_array(array($this->context, $name), $params);
         }
         return true;
     }
@@ -25,7 +53,7 @@ class Verify {
      * @param $value
      * @return bool
      */
-    public function unsigned($value) {
+    public function unsignedFilter($value) {
         return $value >= 0;
     }
 
@@ -34,7 +62,7 @@ class Verify {
      * @param string $format
      * @return bool
      */
-    public function date($date, $format) {
+    public function dateFilter($date, $format) {
         if(is_string($format)) {
             return \DateTime::createFromFormat($format, $date) !== false;
         } else {
@@ -46,7 +74,7 @@ class Verify {
 	 * Dummy validator, just for marks
 	 * @return bool
 	 */
-	public function is() {
+	public function isFilter() {
 		return true;
 	}
 
@@ -55,7 +83,7 @@ class Verify {
 	 * @param string $string
 	 * @return bool
 	 */
-	public function smalltext($string) {
+	public function smallTextFilter($string) {
 		return strlen($string) < 0x100; // max 255B
 	}
 
@@ -64,7 +92,7 @@ class Verify {
 	 * @param string $text
 	 * @return bool
 	 */
-	public function text($text) {
+	public function textFilter($text) {
 		return strlen($text) < 0x10000; // mx 64MiB
 	}
 
@@ -72,7 +100,7 @@ class Verify {
 	 * @param string $text
 	 * @return bool
 	 */
-	public function largetext($text) {
+	public function largeTextFilter($text) {
 		return strlen($text) < 0x200000;  // 2MiB
 	}
 
@@ -80,7 +108,7 @@ class Verify {
      * @param mixed $value
      * @return bool
      */
-    public function positive($value) {
+    public function positiveFilter($value) {
         return $value > 0;
     }
 
@@ -88,7 +116,7 @@ class Verify {
      * @param mixed $value
      * @return bool
      */
-    public function negative($value) {
+    public function negativeFilter($value) {
         return $value < 0;
     }
 
@@ -97,7 +125,7 @@ class Verify {
      * @param string $type
      * @return bool
      */
-    public function email($value, $type) {
+    public function emailFilter($value, $type) {
         if($type === "extended" && strpos($value, "<") !== false) {
             if(preg_match('/^(?:.*?)?<(.*?)>$/', $value, $matches)) {
                 return filter_var($matches[1], FILTER_VALIDATE_EMAIL) !== false;
@@ -112,7 +140,7 @@ class Verify {
      * @param string $value
      * @return bool
      */
-    public function domain($value) {
+    public function domainFilter($value) {
         return !!preg_match('~([a-z0-9-]*\.)+[a-z0-9]+~', $value);
     }
 
@@ -120,7 +148,7 @@ class Verify {
      * @param string $value
      * @return bool
      */
-    public function url($value) {
+    public function urlFilter($value) {
         return filter_var($value, FILTER_VALIDATE_URL) !== false;
     }
 
@@ -128,7 +156,7 @@ class Verify {
      * @param string $value
      * @return bool
      */
-    public function ip($value) {
+    public function ipFilter($value) {
         return filter_var($value, FILTER_VALIDATE_IP) !== false;
     }
 
@@ -136,16 +164,16 @@ class Verify {
      * @param string $value
      * @return int
      */
-    public function keyword($value) {
+    public function keywordFilter($value) {
         return !!preg_match('!^[a-z0-9_-]*$!i', $value);
     }
 
     /**
      * @param string $value
-     * @param array|string $len
+     * @param mixed $len
      * @return bool
      */
-    public function value($value, $len) {
+    public function valueFilter($value, $len) {
         if(is_array($len)) {
             return $value >= $len[0] && $value <= $len[1];
         } else {
@@ -158,7 +186,7 @@ class Verify {
      * @param array|string $len
      * @return bool
      */
-    public function length($value, $len) {
+    public function lengthFilter($value, $len) {
         if(is_array($len)) {
             return strlen($value) >= $len[0] && strlen($value) <= $len[1];
         } else {
@@ -170,7 +198,7 @@ class Verify {
      * @param string $value
      * @return mixed
      */
-    public function callback($value) {
+    public function callbackFilter($value) {
         return is_callable($value);
     }
 
@@ -179,7 +207,7 @@ class Verify {
      * @param string $class
      * @return bool
      */
-    public function className($class) {
+    public function classNameFilter($class) {
         return class_exists($class);
     }
 
@@ -188,7 +216,7 @@ class Verify {
      * @param string $path
      * @return bool
      */
-    public function file($path) {
+    public function fileFilter($path) {
         return is_file(strval($path));
     }
 
@@ -197,7 +225,7 @@ class Verify {
      * @param string $path
      * @return bool
      */
-    public function dir($path) {
+    public function dirFilter($path) {
         return is_dir(strval($path));
     }
 
@@ -207,7 +235,7 @@ class Verify {
      * @param int|array $num the number of elements in the array
      * @return bool
      */
-    public function count($value, $num) {
+    public function countFilterArg($value, $num) {
         if(is_array($num)) {
             return count($value) >= $num[0] && count($value) <= $num[1];
         } else {
@@ -220,8 +248,8 @@ class Verify {
      * @param string $pattern
      * @return bool
      */
-    public function mask($value, $pattern) {
-        return !!preg_match('~^['.$pattern.']*$~', $value);
+    public function maskFilter($value, $pattern) {
+        return !!preg_match('~^['.str_replace('~', '\~', $pattern).']*$~S', $value);
     }
 
 	/**
@@ -229,7 +257,7 @@ class Verify {
 	 * @param $pattern
 	 * @return bool
 	 */
-    public function regexp($value, $pattern) {
+    public function regexpFilter($value, $pattern) {
         return (bool)preg_match($pattern, $value);
     }
 
@@ -238,7 +266,7 @@ class Verify {
 	 * @param $pattern
 	 * @return bool
 	 */
-	public function like($value, $pattern) {
+	public function likeFilter($value, $pattern) {
 		return fnmatch($pattern, $value);
     }
 
@@ -247,7 +275,7 @@ class Verify {
 	 * @param $variants
 	 * @return bool
 	 */
-    public function variants($value, $variants) {
+    public function variantsFilter($value, $variants) {
 	    if(is_array($variants)) {
 			return in_array($value, $variants);
 	    } elseif(is_callable($variants)) {
@@ -262,37 +290,37 @@ class Verify {
 	 * @param callable $callback
 	 * @return bool
 	 */
-    public function option($value, $callback) {
+    public function optionFilter($value, $callback) {
         $options = call_user_func($callback, $value);
         return $options && isset($options[$value]);
     }
 
     /**
-     * @param $validators
+     * @param $filters
      * @return array
      */
-    public static function parse($validators) {
+    public static function parseDoc($filters) {
         $verify = array();
-        if(preg_match_all('!((.*?):?(\s+.*?)?),\s*!', $validators.',', $m)) {
-            foreach($m[2] as $k => $validator) {
+        if(preg_match_all('!((.*?):?(\s+.*?)?),\s*!S', $filters.',', $m)) {
+            foreach($m[2] as $k => $filter) {
                 $arg = trim($m[3][$k]);
                 if($arg) {
-                    if($validator == "variants") {
+                    if($filter == "variants") {
                         if(is_callable($arg)) {
                             $args = call_user_func($arg);
                         } else {
                             $args = preg_split('/\s+/', trim($arg));
                         }
-                    } elseif (preg_match('!^(?<interval>(?<interval_from>\d+)\.\.(?<interval_to>\d+))|(?<range>(?<range_sign>[\>\<]\=?)\s*(?<range_value>\d+))$!', $arg, $args)) {
+                    } elseif (preg_match('!^(?<interval>(?<interval_from>\d+)\.\.(?<interval_to>\d+))|(?<range>(?<range_sign>[\>\<]\=?)\s*(?<range_value>\d+))$!S', $arg, $args)) {
                         if($args['interval']) {
                             $args = array($args['interval_from'] * 1, $args['interval_to'] * 1);
                         } elseif($args['range']) {
                             switch ($args['range_sign']) {
                                 case '<':
-                                    $args = array(-PHP_INT_MAX, $args['range_value'] - 1);
+                                    $args = array(PHP_INT_MIN, $args['range_value'] - 1);
                                     break;
                                 case '<=':
-                                    $args = array(-PHP_INT_MAX, $args['range_value']);
+                                    $args = array(PHP_INT_MIN, $args['range_value']);
                                     break;
                                 case '>':
                                     $args = array($args['range_value'] + 1, PHP_INT_MAX);
@@ -315,7 +343,7 @@ class Verify {
                 } else {
                     $args = true;
                 }
-                $verify[$validator] = array(
+                $verify[$filter] = array(
                     "original" => $m[1][$k],
                     "args" => $args
                 );

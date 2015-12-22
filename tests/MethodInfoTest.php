@@ -1,7 +1,5 @@
 <?php
-
-namespace SmartInvoker;
-
+namespace Koda;
 
 class MethodInfoTest extends \PHPUnit_Framework_TestCase {
 
@@ -10,6 +8,7 @@ class MethodInfoTest extends \PHPUnit_Framework_TestCase {
 		$method = MethodInfo::scan('SmartInvokerTest\Math', 'hypotenuse');
 		$this->assertSame('SmartInvokerTest\Math', $method->class);
 		$this->assertSame('hypotenuse', $method->method);
+		$this->assertSame('SmartInvokerTest\Math::hypotenuse', $method->name);
 		$this->assertSame('Calculate hypotenuse', $method->desc);
 		$this->assertTrue($method->hasOption('link'));
 		$this->assertSame('https://en.wikipedia.org/wiki/Hypotenuse', $method->getOption('link'));
@@ -17,7 +16,7 @@ class MethodInfoTest extends \PHPUnit_Framework_TestCase {
 
 		$this->assertCount(3, $method->args);
 		$this->assertSame(array('leg1', 'leg2', 'round'), array_keys($method->args));
-		$this->assertInstanceOf('SmartInvoker\ArgumentInfo', $method->args['leg1']);
+		$this->assertInstanceOf('Koda\ArgumentInfo', $method->args['leg1']);
 
 		// leg1
 		$leg1 = $method->args['leg1'];
@@ -28,7 +27,7 @@ class MethodInfoTest extends \PHPUnit_Framework_TestCase {
 		$this->assertNull($leg1->default);
 		$this->assertSame('first cathetus of triangle', $leg1->desc);
 		$this->assertSame(0, $leg1->position);
-		$this->assertEquals(array('unsigned' => array('original' => 'unsigned', 'args' => true)), $leg1->verify);
+		$this->assertEquals(array('unsigned' => array('original' => 'unsigned', 'args' => true)), $leg1->filters);
 
 		// round
 		$round = $method->args['round'];
@@ -39,7 +38,7 @@ class MethodInfoTest extends \PHPUnit_Framework_TestCase {
 		$this->assertSame(2, $round->default);
 		$this->assertSame('returns the rounded value of hypotenuse to specified precision', $round->desc);
 		$this->assertSame(2, $round->position);
-		$this->assertEquals(array('value' => array('original' => 'value 0..6', 'args' => array(0, 6))), $round->verify);
+		$this->assertEquals(array('value' => array('original' => 'value 0..6', 'args' => array(0, 6))), $round->filters);
 	}
 
 
@@ -57,7 +56,7 @@ class MethodInfoTest extends \PHPUnit_Framework_TestCase {
 	 * @param float $leg2
 	 * @param int $round
 	 * @param $result
-	 * @throws Error\NotEnoughArgumentException
+	 * @throws \Koda\Error\InvalidArgumentException
 	 */
 	public function testInvoke($leg1, $leg2, $round, $result) {
 		$method = MethodInfo::scan('SmartInvokerTest\Math', 'hypotenuse');
@@ -75,7 +74,7 @@ class MethodInfoTest extends \PHPUnit_Framework_TestCase {
 	 * @dataProvider providerInvokeMulti
 	 * @param $nums
 	 * @param $result
-	 * @throws Error\NotEnoughArgumentException
+	 * @throws \Koda\Error\InvalidArgumentException
 	 */
 	public function testInvokeMulti($nums, $result) {
 		$method = MethodInfo::scan('SmartInvokerTest\Math', 'avg');

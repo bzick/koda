@@ -1,10 +1,10 @@
 <?php
 
-namespace SmartInvoker;
+namespace Koda;
 
 
-use SmartInvoker\Error\TypeCastingException;
-use SmartInvoker\Error\ValidationException;
+use Koda\Error;
+use Koda\Error\TypeCastingException;
 
 class ArgumentInfo {
 	const SCALAR  = 1;
@@ -37,12 +37,6 @@ class ArgumentInfo {
         "resource" => 5,
         "callable" => 10
     );
-
-	/**
-	 * Original method name
-	 * @var string
-	 */
-    public $method;
 	/**
 	 * Parameter name
 	 * @var string
@@ -57,7 +51,7 @@ class ArgumentInfo {
 	 * Verification list
 	 * @var array[]
 	 */
-    public $verify;
+    public $filters;
 	/**
 	 * Expected multiple values
 	 * @var bool
@@ -90,118 +84,126 @@ class ArgumentInfo {
     public $position;
 
 	/**
+	 * @var bool
+	 */
+	public $inject = false;
+
+	/**
+	 * @var CallableInfo
+	 */
+	public $cb;
+
+	public function __construct(CallableInfo $cb) {
+		$this->cb = $cb;
+	}
+
+	public function __toString() {
+		return $this->cb->name."(\$".$this->name.")";
+	}
+
+	/**
 	 * Import information from reflection
 	 * @param \ReflectionParameter $param
-	 * @param array $doc_params
 	 * @return static
 	 */
-    public static function import(\ReflectionParameter $param, array $doc_params = array()) {
-        $arg           = new static;
-        $arg->method   = $param->getDeclaringFunction()->name;
-        $arg->name     = $param->name;
-        $arg->desc     = isset($doc_params[ $param->name ]) ? $doc_params[ $param->name ]["desc"] : "";
-        $arg->verify   = isset($doc_params[ $param->name ]["verify"]) ? $doc_params[ $param->name ]["verify"] : array();
-        $arg->optional = $param->isOptional();
-        $arg->default  = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null;
-        $arg->position = $param->getPosition();
+    public function import(\ReflectionParameter $param) {
+        $this->name     = $param->name;
+	    if(isset($this->cb->options['param'][ $param->name ])) {
+		    $doc_info  = $this->cb->options['param'][ $param->name ];
+		    $this->desc     = $doc_info["desc"];
+		    $this->filters  = $doc_info["filters"];
+	    } else {
+		    $doc_info  = false;
+	    }
+        $this->optional = $param->isOptional();
+        $this->default  = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null;
+        $this->position = $param->getPosition();
+
+	    if(isset($this->filters["inject"])) {
+			$this->inject = $this->filters["inject"] ?: $param->name;
+		    unset($this->filters["inject"]);
+	    }
 
         if($param->isArray()) {
-            $arg->multiple = true;
-            $arg->type = null;
+            $this->multiple = true;
+            $this->type = null;
         }
 
         if($c = $param->getClass()) {
-            $arg->type = "object";
-            $arg->class = $c->name;
-        } elseif(isset($doc_params[ $param->name ])) {
-            $_type = $doc_params[ $param->name ]["type"];
+            $this->type = "object";
+            $this->class = $c->name;
+        } elseif($doc_info) {
+            $_type = $doc_info["type"];
             if(strpos($_type, "|")) { // multitype mark as mixed
-                $arg->type = null;
+                $this->type = null;
             } elseif($_type === "mixed") {
                 if(strpos($_type, "[]")) {
-                    $arg->multiple = true;
+                    $this->multiple = true;
                 }
-                $arg->type = null;
+                $this->type = null;
             } else {
                 if(strpos($_type, "[]")) {
                     $_type = rtrim($_type, '[]');
-                    $arg->multiple = true;
+                    $this->multiple = true;
                 }
 
                 if(isset(self::$_native[$_type])) {
-                    $arg->type = $_type;
+                    $this->type = $_type;
                 } else {
                     $_type = ltrim($_type,'\\');
-                    $arg->type = "object";
-                    $arg->class = $_type;
+                    $this->type = "object";
+                    $this->class = $_type;
                 }
             }
         } else {
-            $arg->type = null;
+            $this->type = null;
         }
 
-        return $arg;
+        return $this;
     }
 
 	/**
 	 * Convert value to required type (with validation if verify present)
 	 * @param mixed $value
-	 * @param object $verify
+	 * @param Filter $filter
 	 * @return mixed
 	 * @throws TypeCastingException
-	 * @throws ValidationException
 	 */
-    public function filter($value, $verify = null) {
+    public function filter($value, Filter $filter = null) {
         $type = gettype($value);
 	    $arg = $this;
         if($this->multiple && !is_array($value)) {
-            throw new TypeCastingException($this, $type);
+            throw Error::invalidType($this, $type);
         }
         if($this->type) {
-            if($this->type === $type) { // type may be an array
-                if($type == "object") {
-                    if($this->multiple) {
-                        array_walk($value, function (&$value) use ($arg) {
-                            if(!is_a($value, $arg->class)) {
-	                            throw new TypeCastingException($arg, gettype($value));
-                            }
-                        });
-                    } else {
-                        if(!is_a($value, $arg->class)) {
-	                        throw new TypeCastingException($arg, $type);
-                        }
-                    }
+            if($this->multiple) {
+                foreach($value as &$v) {
+	                $v = $arg->toType($v);
                 }
-            } else {  // if invalid type - tying fix it
-                if($this->multiple) {
-                    array_walk($value, function (&$value) use ($arg) {
-                        $value = $arg->toType($value);
-                    });
-                } else {
-                    $value = $this->toType($value);
-                }
+            } else {
+                $value = $this->toType($value);
             }
         }
-        if($this->verify && $verify) {
-            foreach($this->verify as $method => $v) {
+        if($this->filters && $filter) {
+            foreach($this->filters as $method => $f) {
                 if($this->multiple) {
                     foreach($value as $k => &$item) {
 	                    try {
-		                    if (call_user_func(array($verify, $method), $item, $v['args']) === false) {
-			                    throw new ValidationException($this, $method);
+		                    if($filter->{$method."Filter"}($item, $f['args'], $this) === false) {
+			                    throw Error::filteringFailed($this, $method);
 		                    }
 	                    } catch(\Exception $e) {
-		                    throw new ValidationException($this, $method, $e);
+		                    throw Error::filteringFailed($this, $method, $e);
 
 	                    }
                     }
                 } else {
 	                try {
-		                if (call_user_func(array($verify, $method), $value, $v['args']) === false) {
-			                throw new ValidationException($this, $method);
+		                if($filter->{$method."Filter"}($value, $f['args'], $this) === false) {
+			                throw Error::filteringFailed($this, $method);
 		                }
 	                } catch (\Exception $e) {
-		                throw new ValidationException($this, $method, $e);
+		                throw Error::filteringFailed($this, $method, $e);
 	                }
                 }
             }
@@ -212,34 +214,34 @@ class ArgumentInfo {
 	/**
 	 * Type casting
 	 * @param mixed $value
-	 * @param null $creator
+	 * @param Filter $filter
 	 * @return mixed
 	 * @throws TypeCastingException
 	 */
-    public function toType($value, $creator = null) {
+    public function toType($value, Filter $filter = null) {
 	    $type = gettype($value);
         switch($this->type) {
 	        case "callable":
 		        if (!is_callable($value)) {
-			        throw new TypeCastingException($this, $type);
+			        throw Error::invalidType($this, $type);
 		        }
 		        return $value;
 	        case "object":
 		        if (is_a($value, $this->class)) {
 			        break;
-		        } elseif ($creator) {
-			        return call_user_func($creator, $this->class, $value);
+		        } elseif ($filter && $filter->factory) {
+			        return $filter->factory($this, $value);
 		        }
-		        throw new TypeCastingException($this, $type);
+		        throw Error::invalidType($this, $type);
         }
 	    if($type == "array" || $type == "object") {
-		    throw new TypeCastingException($this, $type);
+		    throw Error::invalidType($this, $type);
 	    }
 	    switch($this->type) {
             case "int":
             case "float":
                 if(!is_numeric($value)) {
-                    throw new TypeCastingException($this, $type);
+                    throw Error::invalidType($this, $type);
                 } else {
                     settype($value, $this->type);
                 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace SmartInvokerTest;
+namespace Koda;
 
 
 class Math {

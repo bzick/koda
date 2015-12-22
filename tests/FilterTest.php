@@ -1,9 +1,9 @@
 <?php
 
-namespace SmartInvoker;
+namespace Koda;
 
 
-class VerifyTest extends \PHPUnit_Framework_TestCase {
+class FilterTest extends \PHPUnit_Framework_TestCase {
 
 	public $verify;
 
@@ -15,12 +15,12 @@ class VerifyTest extends \PHPUnit_Framework_TestCase {
 		return array("v1" => "version 1", "v2" => "version 2");
 	}
 
-	public function equalValidator($val, $letter) {
+	public function equalsFilter($val, $letter) {
 		return $val === $letter;
 	}
 
 	public function setUp() {
-		$this->verify = new Verify($this);
+		$this->verify = new Filter($this);
 	}
 
 	public function providerValidators() {
@@ -90,8 +90,8 @@ class VerifyTest extends \PHPUnit_Framework_TestCase {
 			array("callback", true,  "is_string"),
 			array("callback", false,  "is_string2"),
 
-			array("className", true,  'SmartInvoker\VerifyTest'),
-			array("className", false,  'SmartInvoker\VerifyTestInv'),
+			array("className", true,  FilterTest::class),
+			array("className", false,  FilterTest::class."Invalid"),
 
 			array("file", true,  __FILE__),
 			array("file", false,  '/unexists'),
@@ -116,14 +116,14 @@ class VerifyTest extends \PHPUnit_Framework_TestCase {
 			array("variants", false,  'v3', array("v1", "v2")),
 			array("variants", true,  'v1', "v1 v2"),
 			array("variants", false,  'v3', "v1 v2"),
-			array("variants", true,  'v1', 'SmartInvoker\VerifyTest::variants'),
-			array("variants", false,  'v3', 'SmartInvoker\VerifyTest::variants'),
+			array("variants", true,  'v1', FilterTest::class.'::variants'),
+			array("variants", false,  'v3', FilterTest::class.'::variants'),
 
-			array("option", true,  'v1', 'SmartInvoker\VerifyTest::options'),
-			array("option", false,  'v3', 'SmartInvoker\VerifyTest::options'),
+			array("option", true,  'v1', FilterTest::class.'::options'),
+			array("option", false,  'v3', FilterTest::class.'::options'),
 
-			array("equal", true,  'v3', 'v3'),
-			array("equal", false,  'v3', 'v4'),
+			array("equals", true,  'v3', 'v3'),
+			array("equals", false,  'v3', 'v4'),
 
 			array("fake", true,  'v3'),
 
@@ -137,8 +137,8 @@ class VerifyTest extends \PHPUnit_Framework_TestCase {
 	 * @param $param
 	 * @param $result
 	 */
-	public function testValidators($method, $result, $value, $param = true) {
-		$this->assertEquals($result, $this->verify->$method($value, $param));
+	public function testValidations($method, $result, $value, $param = true) {
+		$this->assertEquals($result, $this->verify->{$method."Filter"}($value, $param));
 	}
 
 }

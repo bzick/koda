@@ -5,10 +5,14 @@ require_once __DIR__.'/../vendor/autoload.php';
 
 class Example {
 
+	public function __construct() {
+	}
+
 	/**
+	 * Calculate of hypotenuse
 	 * @param float $leg1 (unsigned)
 	 * @param float $leg2 (unsigned)
-	 * @param int $round (1..6)
+	 * @param int $round (value 1..6)
 	 * @return float
 	 */
 	public function hypotenuseCalc($leg1, $leg2, $round = 2) {
@@ -21,7 +25,8 @@ class Example {
 	}
 }
 
-$class = new \SmartInvoker\ClassInfo('Example', \SmartInvoker\ClassInfo::FLAG_OBJECT, "*Calc");
+$class = new Koda\ClassInfo('Example', Koda\ClassInfo::FLAG_OBJECT, "*Calc");
 
 var_dump(json_encode($class, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-//var_dump(SmartInvoker::call([new Example(), 'hypotenuse'], ['leg2' => 3, 'leg1' => 4]));
+//var_dump(Koda::call([new Example(), 'hypotenuseCalc'], ['leg2' => 3, 'leg1' => 4]));
+var_dump(Koda::object(Example::class));

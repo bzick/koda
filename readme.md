@@ -1,9 +1,9 @@
-SmartInvoker
-=============
+Koda
+====
 
-[![Build Status](https://travis-ci.org/bzick/smart-invoker.svg)](https://travis-ci.org/bzick/smart-invoker) [![Coverage Status](https://coveralls.io/repos/bzick/smart-invoker/badge.svg)](https://coveralls.io/r/bzick/smart-invoker)
+[![Build Status](https://travis-ci.org/bzick/koda.svg)](https://travis-ci.org/bzick/koda) [![Coverage Status](https://coveralls.io/repos/bzick/koda/badge.svg)](https://coveralls.io/r/bzick/koda)
 
-Smart Invoker allows to call functions, methods and objects with validation of arguments and type casting. 
+Koda allows to analyse code entries, call functions, methods and objects with validation of arguments and type casting.
 This is similar to [call_user_func](http://php.net/call_user_func) and [call_user_func_array](http://php.net/call_user_func_array), but more smarter.
 For example calculate hypotenuse using method:
 
@@ -44,13 +44,13 @@ if(isset($_GET['leg2'])) {
 return call_user_func('Math::hypotenuse', $leg1, $leg2);
 ```
 
-But if use `SmartInvoker` we get one line of code: 
+But if use `Koda` we get one line of code:
 
 ```php
-return SmartInvoker::call('Math::hypotenuse', $_GET);
+return Koda::call('Math::hypotenuse', $_GET);
 ```
 
-SmartInvoker find all arguments from associative (or plain) array `$_GET`, change type, validate and invoke method.
+Koda find all arguments from associative (or plain) array `$_GET`, change type, validate and invoke method.
 
 ## Method call
 
@@ -84,7 +84,7 @@ public function doSomethingAction($arg1, $arg2, array $arg3) {
 }
 ```
 
-List of verifications (class `SmartInvoker\Verify`):
+List of verifications (class `Koda\Filter`):
 
 * `unsigned` - value is unsigned __integer__
 * `positive` - __integer__ value __greater than zero__

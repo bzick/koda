@@ -1,7 +1,6 @@
 <?php
 
-namespace SmartInvoker;
-
+namespace Koda;
 
 class ClassInfo {
 	const FLAG_OBJECT = 1;
@@ -19,7 +18,7 @@ class ClassInfo {
 	/**
 	 * @var string
 	 */
-    public $class;
+    public $name;
     public $desc    = "";
 
 	/**
@@ -28,11 +27,11 @@ class ClassInfo {
 	 * @param string $pattern method name mask (glob syntax)
 	 */
 	public function __construct($class_name, $load = self::FLAG_BOTH, $pattern = "*") {
-		$this->class = $class_name;
-		$ref = new \ReflectionClass($this->class);
+		$this->name = $class_name;
+		$this->ref = new \ReflectionClass($this->name);
 
 		if($load) {
-			foreach($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $me) {
+			foreach($this->ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $me) {
 				if($load === self::FLAG_OBJECT) {
 					if($me->isStatic()) {
 						continue;
@@ -45,12 +44,18 @@ class ClassInfo {
 				if($pattern !== "*" && !fnmatch($pattern, $me->name)) {
 					continue;
 				}
-				$this->methods[$me->name]  = MethodInfo::import($me);
+				$method = new MethodInfo();
+				$method->import($me);
+				$this->methods[$me->name] = $method;
 			}
 		}
 	}
 
-    /**
+	public function __toString() {
+		return $this->name;
+	}
+
+	/**
      * Get method info from class
      * @param string $method
      * @return MethodInfo|bool
@@ -58,10 +63,15 @@ class ClassInfo {
     public function getMethod($method) {
 	    if(isset($this->methods[$method])) {
 		    return $this->methods[$method];
-	    } elseif(method_exists($this->class, $method)) {
-		    return $this->methods[$method]  = MethodInfo::scan($this->class, $method);
+	    } elseif(method_exists($this->name, $method)) {
+		    return $this->methods[$method]  = MethodInfo::scan($this->name, $method);
 	    } else {
 		    return false;
 	    }
     }
+
+
+	public function instance(array $params, Filter $filter = null) {
+
+	}
 } 
