@@ -221,6 +221,9 @@ class ArgumentTest extends \PHPUnit_Framework_TestCase {
      * @throws \Exception
      */
     public function testCast($method, $result, $arg = null) {
+        if(strpos($method, "Hint") && PHP_VERSION_ID < 70000) {
+            $this->markTestSkipped("PHP7 required");
+        }
         $method = MethodInfo::scan('Koda\Samples', $method);
         if(func_num_args() > 2) {
             $args = [$arg];
