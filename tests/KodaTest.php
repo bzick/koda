@@ -3,19 +3,9 @@
 namespace Koda;
 
 
+use Koda\Error\InvalidArgumentException;
+
 class KodaTest extends \PHPUnit_Framework_TestCase {
-
-    public function providerHint() {
-        return [
-            ["int", 1,   1],
-            ["int", "1", 1],
-            ["int", "z", 0],
-        ];
-    }
-
-    public function testHint($cb, $s) {
-
-    }
 
 	/**
 	 * @param int[] $a (unsigned)
@@ -31,7 +21,7 @@ class KodaTest extends \PHPUnit_Framework_TestCase {
 			[KodaTest::class."::staticEquals", [[1], [1.0]], true],
 			[[KodaTest::class, "staticEquals"], [[1], [1.0]], true],
 			[[$this, "staticEquals"], [[1], [1.0]], true],
-			[KodaTest::class."::staticEquals", [[1], [11.0]], false],
+			[KodaTest::class."::staticEquals", [[1], [11]], new InvalidArgumentException()],
 		];
 	}
 
@@ -49,7 +39,6 @@ class KodaTest extends \PHPUnit_Framework_TestCase {
 		} catch (\Exception $e) {
 			if($result instanceof \Exception) {
 				$this->assertInstanceOf(get_class($result), $e);
-				$this->assertEquals($result->getMessage(), $e->getMessage());
 			} else {
 				throw $e;
 			}
