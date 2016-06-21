@@ -1,7 +1,7 @@
 Koda
 ====
 
-[![Build Status](https://travis-ci.org/bzick/koda.svg)](https://travis-ci.org/bzick/koda) [![Coverage Status](https://coveralls.io/repos/bzick/koda/badge.svg)](https://coveralls.io/r/bzick/koda)
+[![Build Status](https://travis-ci.org/bzick/koda.svg)](https://travis-ci.org/bzick/koda) [![Coverage Status](https://coveralls.io/repos/github/bzick/koda/badge.svg?branch=master)](https://coveralls.io/github/bzick/koda?branch=master)
 
 Koda allows to analyse code entries, call functions, methods and objects with validation of arguments and type casting.
 This is similar to [call_user_func](http://php.net/call_user_func) and [call_user_func_array](http://php.net/call_user_func_array), but more smarter.
