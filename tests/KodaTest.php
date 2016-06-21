@@ -5,6 +5,18 @@ namespace Koda;
 
 class KodaTest extends \PHPUnit_Framework_TestCase {
 
+    public function providerHint() {
+        return [
+            ["int", 1,   1],
+            ["int", "1", 1],
+            ["int", "z", 0],
+        ];
+    }
+
+    public function testHint($cb, $s) {
+
+    }
+
 	/**
 	 * @param int[] $a (unsigned)
 	 * @param int[] $b (value 1..10)
@@ -19,12 +31,11 @@ class KodaTest extends \PHPUnit_Framework_TestCase {
 			[KodaTest::class."::staticEquals", [[1], [1.0]], true],
 			[[KodaTest::class, "staticEquals"], [[1], [1.0]], true],
 			[[$this, "staticEquals"], [[1], [1.0]], true],
-			[KodaTest::class."::staticEquals", [[1], [11.0]], true],
+			[KodaTest::class."::staticEquals", [[1], [11.0]], false],
 		];
 	}
 
 	/**
-	 * @group dev
 	 * @dataProvider providerCall
 	 * @param $cb
 	 * @param $args

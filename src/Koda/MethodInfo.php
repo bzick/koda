@@ -8,7 +8,6 @@ use Koda\Error\CallableNotFoundException;
 
 class MethodInfo extends CallableInfo {
 
-    public $class;
     public $method;
 
 	/**

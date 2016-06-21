@@ -7,7 +7,8 @@ use Koda\Error\InvalidArgumentException;
 
 abstract class CallableInfo {
 
-	public $name;
+    public $class;
+    public $name;
 	public $desc = "";
 	/**
 	 * @var ArgumentInfo[]
@@ -18,6 +19,7 @@ abstract class CallableInfo {
 	 */
 	public $return;
 	public $options = array();
+	public $params = array();
 
 	public function getDescription() {
 		return $this->desc;
@@ -69,7 +71,7 @@ abstract class CallableInfo {
 								break;
 							case 'param':
 								if(preg_match('/^(.*?)\s+\$(\w+)\s*(?:\(([^\)]+)\))?/mS', $param[1], $matches)) {
-									$doc_params[ $matches[2] ] = array(
+                                    $this->params[ $matches[2] ] = array(
 										"type" => $matches[1],
 										"desc" => trim(substr($param[1], strlen($matches[0]))),
 										"filters" => isset($matches[3]) ? Filter::parseDoc($matches[3]) : array()

@@ -1,6 +1,8 @@
 <?php
 namespace Koda;
 
+use Koda\Error\InvalidArgumentException;
+
 class MethodInfoTest extends \PHPUnit_Framework_TestCase {
 
 
@@ -42,7 +44,7 @@ class MethodInfoTest extends \PHPUnit_Framework_TestCase {
 	}
 
 
-	public function providerInvoke() {
+	public function providerInvokeSimple() {
 		return array(
 			array(3, 4, 2, 5),
 			array(3.1, 4.1, 2, 5.14),
@@ -51,14 +53,14 @@ class MethodInfoTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
-	 * @dataProvider providerInvoke
+	 * @dataProvider providerInvokeSimple
 	 * @param float $leg1
 	 * @param float $leg2
 	 * @param int $round
 	 * @param $result
 	 * @throws \Koda\Error\InvalidArgumentException
 	 */
-	public function testInvoke($leg1, $leg2, $round, $result) {
+	public function testInvokeSimple($leg1, $leg2, $round, $result) {
 		$method = MethodInfo::scan('Koda\Math', 'hypotenuse');
 		$this->assertEquals($result, $method->invoke(array($leg1, $leg2, $round)));
 		$this->assertEquals($result, $method->invoke(array("leg2" => $leg2, "leg1" => $leg1, "round" => $round)));
@@ -80,4 +82,5 @@ class MethodInfoTest extends \PHPUnit_Framework_TestCase {
 		$method = MethodInfo::scan('Koda\Math', 'avg');
 		$this->assertEquals($result, $method->invoke(array("nums" => $nums)));
 	}
+
 }
