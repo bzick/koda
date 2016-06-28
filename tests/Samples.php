@@ -351,4 +351,35 @@ class Samples
     {
         return $start + array_sum($values);
     }
+
+    /**
+     * @param int $param (inject age)
+     *
+     * @return int
+     */
+    public static function doInjection($param) {
+        return $param;
+    }
+
+    /**
+     * @param \ArrayObject $param
+     *
+     * @return \ArrayObject
+     */
+    public static function doFactory(\ArrayObject $param) {
+        return $param;
+    }
+
+    /**
+     * @param int $v1 (value 1..9)
+     * @param int $v2 (value >10)
+     * @param int $v3 (value >=10)
+     * @param int $v4 (value <10)
+     * @param int $v5 (value <=10)
+     *
+     * @return bool
+     */
+    public static function ranges($v1, $v2, $v3, $v4, $v5) {
+        return true;
+    }
 }

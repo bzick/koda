@@ -99,7 +99,7 @@ class Filter
         try {
             return call_user_func($this->injector, $info, $value);
         } catch (\Exception $e) {
-            throw new InvalidArgumentException("Injection failed: " . $e->getMessage(), $info, $e, 'inject');
+            throw Error::injectionFailed($info, $e);
         }
     }
 
@@ -108,7 +108,7 @@ class Filter
         try {
             return call_user_func($this->factory, $info, $value);
         } catch (\Exception $e) {
-            throw new InvalidArgumentException("Injection failed: " . $e->getMessage(), $info, $e, 'inject');
+            throw Error::factoryFailed($info, $e);
         }
     }
 

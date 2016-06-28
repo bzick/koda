@@ -213,7 +213,6 @@ class ArgumentTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @group        dev
      * @dataProvider providerCast
      *
      * @param string $method

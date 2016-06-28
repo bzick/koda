@@ -119,8 +119,10 @@ class Error
      */
     public static function injectionFailed(ArgumentInfo $arg, \Exception $error)
     {
-        $ex           = new InvalidArgumentException("Injection of object {$arg->inject} failed into $arg: {$error->getMessage()}",
-            0, $error);
+        $ex           = new InvalidArgumentException(
+            "Injection of object {$arg->inject} failed into $arg: {$error->getMessage()}",
+            0, $error
+        );
         $ex->argument = $arg;
         $ex->filter   = self::FILTER_INJECT;
 
@@ -135,8 +137,10 @@ class Error
      */
     public static function factoryFailed(ArgumentInfo $arg, \Exception $error)
     {
-        $ex           = new InvalidArgumentException("Object creation of {$arg->class} failed for $arg: {$error->getMessage()}",
-            0, $error);
+        $ex           = new InvalidArgumentException(
+            "Object creation of {$arg->class} failed for $arg: {$error->getMessage()}",
+            0, $error
+        );
         $ex->argument = $arg;
         $ex->filter   = self::FILTER_INJECT;
 
