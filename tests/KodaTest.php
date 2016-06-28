@@ -51,4 +51,22 @@ class KodaTest extends \PHPUnit_Framework_TestCase
             }
         }
     }
+
+    /**
+     * @group dev
+     */
+    public function testObject() {
+        $object = \Koda::object(Samples::class, ["index" => 16]);
+        $this->assertEquals(new Samples(), $object);
+
+        $object = \Koda::object(SampleObject::class, ["index" => 16, "factory" => 64, "inject" => 3], [
+            "injector" => function(ArgumentInfo $info, $value) {
+                return $value . "2";
+            },
+            "factory" => function(ArgumentInfo $info, $value) {
+                return new \ArrayObject(["param" => $value]);
+            }
+        ]);
+        $this->assertEquals(new SampleObject(16, 32, new \ArrayObject(["param" => 64])), $object);
+    }
 }

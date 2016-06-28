@@ -99,6 +99,7 @@ class MethodInfoTest extends \PHPUnit_Framework_TestCase
         $result = \Koda::call([Samples::class, "doInjection"], ["param" => 3], [
             "injector" => function(ArgumentInfo $info, $value) {
                 $this->assertSame(3, $value);
+                $this->assertSame("age", $info->inject);
                 $this->assertSame("param", $info->name);
                 return $value . "2";
             }
@@ -111,6 +112,8 @@ class MethodInfoTest extends \PHPUnit_Framework_TestCase
     public function testFactory() {
         $result = \Koda::call([Samples::class, "doFactory"], ["param" => 32], [
             "factory" => function(ArgumentInfo $info, $value) {
+                $this->assertSame(32, $value);
+                $this->assertSame("param", $info->name);
                 return new \ArrayObject(["param" => $value, "extra" => 16]);
             }
         ]);
@@ -133,7 +136,6 @@ class MethodInfoTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @group dev
      * @dataProvider rangesProvider
      * @param $values
      * @param $success
