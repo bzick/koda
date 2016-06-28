@@ -7,7 +7,7 @@
 	{
 	  "name": "Ivan Shalganov",
 	  "email": "a.cobest@gmail.com"
-	}
+    }
   ],
   "require": {
 	"php": ">=5.6"

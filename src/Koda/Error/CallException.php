@@ -4,11 +4,12 @@ namespace Koda\Error;
 
 use Koda\FunctionInfo;
 
-class CallException extends \Exception {
+class CallException extends \Exception
+{
 
-	/**
-	 * @var FunctionInfo
-	 */
-	public $callable;
+    /**
+     * @var FunctionInfo
+     */
+    public $callable;
 
 }

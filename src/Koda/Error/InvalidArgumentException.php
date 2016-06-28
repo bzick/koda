@@ -2,11 +2,12 @@
 
 namespace Koda\Error;
 
-class InvalidArgumentException extends \Exception {
-	// pseudo types
-	const FILTER_REQUIRED = 'required';
-	const FILTER_CAST     = 'cast';
+class InvalidArgumentException extends \Exception
+{
+    // pseudo types
+    const FILTER_REQUIRED = 'required';
+    const FILTER_CAST     = 'cast';
 
-	public $argument;
-	public $filter;
+    public $argument;
+    public $filter;
 }

@@ -5,12 +5,15 @@ namespace Koda;
 
 use Koda\Error\InvalidArgumentException;
 
-class ArgumentTest extends \PHPUnit_Framework_TestCase {
+class ArgumentTest extends \PHPUnit_Framework_TestCase
+{
 
-    public function providerCast() {
-        $std = new \StdClass();
+    public function providerCast()
+    {
+        $std    = new \StdClass();
         $sample = new Samples();
-        return array(
+
+        return [
             // Integer
             ["intRequired", 3, 3],
             ["intRequired", 3, "3"],
@@ -167,8 +170,8 @@ class ArgumentTest extends \PHPUnit_Framework_TestCase {
             ["arraysRequired", null, "z"],
             ["arraysRequired", null, new \stdClass()],
 
-            ["arraysOptional", [[],[]]],
-            ["arraysOptional", [[],[]], null],
+            ["arraysOptional", [[], []]],
+            ["arraysOptional", [[], []], null],
             ["arraysOptional", [[1]], [[1]]],
 
             // Object
@@ -206,7 +209,7 @@ class ArgumentTest extends \PHPUnit_Framework_TestCase {
             ["selfsOptional", [], null],
             ["selfsOptional", null, [$std]],
             ["selfsOptional", [$sample], [$sample]],
-        );
+        ];
     }
 
     /**
@@ -220,12 +223,13 @@ class ArgumentTest extends \PHPUnit_Framework_TestCase {
      * @throws Error\CallableNotFoundException
      * @throws \Exception
      */
-    public function testCast($method, $result, $arg = null) {
-        if(strpos($method, "Hint") && PHP_VERSION_ID < 70000) {
+    public function testCast($method, $result, $arg = null)
+    {
+        if (strpos($method, "Hint") && PHP_VERSION_ID < 70000) {
             $this->markTestSkipped("PHP7 required");
         }
         $method = MethodInfo::scan('Koda\Samples', $method);
-        if(func_num_args() > 2) {
+        if (func_num_args() > 2) {
             $args = [$arg];
         } else {
             $args = [];
@@ -233,14 +237,14 @@ class ArgumentTest extends \PHPUnit_Framework_TestCase {
 
         try {
             $this->assertSame($result, $method->invoke($args));
-        } catch(InvalidArgumentException $e) {
-            if($result === null) {
+        } catch (InvalidArgumentException $e) {
+            if ($result === null) {
                 return;
             } else {
                 throw $e;
             }
         }
-        if(func_num_args() > 2) {
+        if (func_num_args() > 2) {
             $args = ["val" => $arg];
         } else {
             $args = [];

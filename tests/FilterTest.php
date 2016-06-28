@@ -3,142 +3,150 @@
 namespace Koda;
 
 
-class FilterTest extends \PHPUnit_Framework_TestCase {
+class FilterTest extends \PHPUnit_Framework_TestCase
+{
 
 	public $verify;
 
-	public static function variants() {
-		return array("v1", "v2");
+	public static function variants()
+	{
+		return ["v1", "v2"];
 	}
 
-	public static function options() {
-		return array("v1" => "version 1", "v2" => "version 2");
+	public static function options()
+	{
+		return ["v1" => "version 1", "v2" => "version 2"];
 	}
 
-	public function equalsFilter($val, $letter) {
+	public function equalsFilter($val, $letter)
+	{
 		return $val === $letter;
 	}
 
-	public function setUp() {
+	public function setUp()
+	{
 		$this->verify = new Filter($this);
 	}
 
-	public function providerValidators() {
-		return array(
-			array("unsigned", true, 1),
-			array("unsigned", true, 0),
-			array("unsigned", false, -1),
+	public function providerValidators()
+	{
+		return [
+			["unsigned", true, 1],
+			["unsigned", true, 0],
+			["unsigned", false, -1],
 
-			array("date", true,  "2015-06-21"),
-			array("date", true,  "20150621"),
-			array("date", false, "15|06|21"),
-			array("date", true,  "15/06/21", "y/m/d"),
+			["date", true, "2015-06-21"],
+			["date", true, "20150621"],
+			["date", false, "15|06|21"],
+			["date", true, "15/06/21", "y/m/d"],
 
-			array("is", true,  1),
+			["is", true, 1],
 
-			array("smalltext", true,  str_pad("", 255 ,"a")),
-			array("smalltext", false,  str_pad("", 256 ,"a")),
+			["smalltext", true, str_pad("", 255, "a")],
+			["smalltext", false, str_pad("", 256, "a")],
 
-			array("text", true,  str_pad("", 256 ,"a")),
+			["text", true, str_pad("", 256, "a")],
 
-			array("largetext", true,  str_pad("", 256 ,"a")),
+			["largetext", true, str_pad("", 256, "a")],
 
-			array("positive", true,  1),
-			array("positive", false,  0),
-			array("positive", false,  -1),
+			["positive", true, 1],
+			["positive", false, 0],
+			["positive", false, -1],
 
-			array("negative", true,  -1),
-			array("negative", false,  0),
-			array("negative", false,  1),
+			["negative", true, -1],
+			["negative", false, 0],
+			["negative", false, 1],
 
-			array("email", true,   "a.cobest@gmail.com"),
-			array("email", false,  "a.cobest.gmail.com"),
-			array("email", false,  "Ivan Shalganov <a.cobest@gmail.com>"),
-			array("email", true,   "Ivan Shalganov <a.cobest@gmail.com>", "extended"),
-			array("email", false,  "Ivan Shalganov a.cobest@gmail.com", "extended"),
-			array("email", false,  "Ivan Shalganov <a.cobest@gmail.com", "extended"),
-			array("email", false,  "Ivan Shalganov <a.cobest.gmail.com>"),
+			["email", true, "a.cobest@gmail.com"],
+			["email", false, "a.cobest.gmail.com"],
+			["email", false, "Ivan Shalganov <a.cobest@gmail.com>"],
+			["email", true, "Ivan Shalganov <a.cobest@gmail.com>", "extended"],
+			["email", false, "Ivan Shalganov a.cobest@gmail.com", "extended"],
+			["email", false, "Ivan Shalganov <a.cobest@gmail.com", "extended"],
+			["email", false, "Ivan Shalganov <a.cobest.gmail.com>"],
 
-			array("domain", true,   "yandex.com"),
-			array("domain", false,  "yandexcom"),
-			array("domain", false,  "домен.рф"), // add punicode
+			["domain", true, "yandex.com"],
+			["domain", false, "yandexcom"],
+			["domain", false, "домен.рф"], // add punicode
 
-			array("url", true,  "https://www.yandex.com/search/?text=Smart%20Invoker%20PHP"),
-			array("url", true,  "https://www.yandex.com/"),
-			array("url", false,  "https://домен.рф/"), // add punicode
-			array("url", false,  "//www.yandex.com/search/?text=Smart%20Invoker%20PHP"),
-			array("url", false,  "text=Smart%20Invoker%20PHP"),
+			["url", true, "https://www.yandex.com/search/?text=Smart%20Invoker%20PHP"],
+			["url", true, "https://www.yandex.com/"],
+			["url", false, "https://домен.рф/"], // add punicode
+			["url", false, "//www.yandex.com/search/?text=Smart%20Invoker%20PHP"],
+			["url", false, "text=Smart%20Invoker%20PHP"],
 
-			array("ip", true,  "127.0.0.1"),
-			array("ip", true,  "::1"),
-			array("ip", false,  "127.o.o.1"),
+			["ip", true, "127.0.0.1"],
+			["ip", true, "::1"],
+			["ip", false, "127.o.o.1"],
 
-			array("keyword", true,  "bzick"),
-			array("keyword", false,  "bzick/"),
+			["keyword", true, "bzick"],
+			["keyword", false, "bzick/"],
 
-			array("value", true,  2, array(1, 3)),
-			array("value", false,  4, array(1, 3)),
-			array("value", true,  4, 4),
-			array("value", false,  4, 5),
+			["value", true, 2, [1, 3]],
+			["value", false, 4, [1, 3]],
+			["value", true, 4, 4],
+			["value", false, 4, 5],
 
 
-			array("length", true,  "bzick", array(1, 6)),
-			array("length", false,  "bzick", array(1, 3)),
-			array("length", true,  "bzick", 5),
-			array("length", false,  "bzick", 6),
+			["length", true, "bzick", [1, 6]],
+			["length", false, "bzick", [1, 3]],
+			["length", true, "bzick", 5],
+			["length", false, "bzick", 6],
 
-			array("callback", true,  "is_string"),
-			array("callback", false,  "is_string2"),
+			["callback", true, "is_string"],
+			["callback", false, "is_string2"],
 
-			array("className", true,  FilterTest::class),
-			array("className", false,  FilterTest::class."Invalid"),
+			["className", true, FilterTest::class],
+			["className", false, FilterTest::class . "Invalid"],
 
-			array("file", true,  __FILE__),
-			array("file", false,  '/unexists'),
+			["file", true, __FILE__],
+			["file", false, '/unexists'],
 
-			array("dir", true,  __DIR__),
-			array("dir", false,  '/unexists'),
+			["dir", true, __DIR__],
+			["dir", false, '/unexists'],
 
-			array("mask", true,  'bzick', "a-z"),
-			array("mask", false, 'bzick2', "a-z"),
-			array("mask", true,  'bzick2', "a-z0-9"),
+			["mask", true, 'bzick', "a-z"],
+			["mask", false, 'bzick2', "a-z"],
+			["mask", true, 'bzick2', "a-z0-9"],
 
-			array("regexp", true,   'bzick', '/^bzick$/'),
-			array("regexp", false,  'bzick2', '/^bzick$/'),
-			array("regexp", true,   'bzick2', '/^bzick\d+$/'),
-			array("regexp", false,  'bzick22', '/^bzick\d$/'),
+			["regexp", true, 'bzick', '/^bzick$/'],
+			["regexp", false, 'bzick2', '/^bzick$/'],
+			["regexp", true, 'bzick2', '/^bzick\d+$/'],
+			["regexp", false, 'bzick22', '/^bzick\d$/'],
 
-			array("like", true,  'bzick', "bz*ck"),
-			array("like", false, 'bzick2', "bz*ck"),
-			array("like", true,  'bzick2', "bz*ck[0-9]"),
+			["like", true, 'bzick', "bz*ck"],
+			["like", false, 'bzick2', "bz*ck"],
+			["like", true, 'bzick2', "bz*ck[0-9]"],
 
-			array("variants", true,  'v1', array("v1", "v2")),
-			array("variants", false,  'v3', array("v1", "v2")),
-			array("variants", true,  'v1', "v1 v2"),
-			array("variants", false,  'v3', "v1 v2"),
-			array("variants", true,  'v1', FilterTest::class.'::variants'),
-			array("variants", false,  'v3', FilterTest::class.'::variants'),
+			["variants", true, 'v1', ["v1", "v2"]],
+			["variants", false, 'v3', ["v1", "v2"]],
+			["variants", true, 'v1', "v1 v2"],
+			["variants", false, 'v3', "v1 v2"],
+			["variants", true, 'v1', FilterTest::class . '::variants'],
+			["variants", false, 'v3', FilterTest::class . '::variants'],
 
-			array("option", true,  'v1', FilterTest::class.'::options'),
-			array("option", false,  'v3', FilterTest::class.'::options'),
+			["option", true, 'v1', FilterTest::class . '::options'],
+			["option", false, 'v3', FilterTest::class . '::options'],
 
-			array("equals", true,  'v3', 'v3'),
-			array("equals", false,  'v3', 'v4'),
+			["equals", true, 'v3', 'v3'],
+			["equals", false, 'v3', 'v4'],
 
-			array("fake", true,  'v3'),
+			["fake", true, 'v3'],
 
-		);
+		];
 	}
 
 	/**
 	 * @dataProvider providerValidators
+	 *
 	 * @param $method
 	 * @param $value
 	 * @param $param
 	 * @param $result
 	 */
-	public function testValidations($method, $result, $value, $param = true) {
-		$this->assertEquals($result, $this->verify->{$method."Filter"}($value, $param));
+	public function testValidations($method, $result, $value, $param = true)
+	{
+		$this->assertEquals($result, $this->verify->{$method . "Filter"}($value, $param));
 	}
 
 }
