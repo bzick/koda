@@ -126,7 +126,7 @@ class ArgumentInfo
         $this->position = $param->getPosition();
 
         if (isset($this->filters["inject"])) {
-            $this->inject = $this->filters["inject"] ?: $param->name;
+            $this->inject = $this->filters["inject"]["args"] ?: $param->name;
             unset($this->filters["inject"]);
         }
 
