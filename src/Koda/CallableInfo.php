@@ -8,7 +8,7 @@ use Koda\Error\InvalidArgumentException;
 abstract class CallableInfo
 {
 
-	public $class;
+	public $namespace;
 	public $name;
 	public $desc = "";
 	/**

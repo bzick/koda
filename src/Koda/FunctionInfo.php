@@ -8,6 +8,7 @@ use Koda\Error\CallableNotFoundException;
 class FunctionInfo extends CallableInfo
 {
 
+    public $function;
     /**
      * Scan function entry
      *
@@ -21,7 +22,7 @@ class FunctionInfo extends CallableInfo
         try {
             $fe = new \ReflectionFunction($name);
         } catch (\Exception $e) {
-            throw Error::methodNotFound($name);
+            throw Error::functionNotFound($name);
         }
         $info = new static;
         $info->import($fe);
@@ -31,6 +32,9 @@ class FunctionInfo extends CallableInfo
 
     public function import(\ReflectionFunction $function)
     {
+        $this->name      = $function->name;
+        $this->function  = $function->getShortName();
+        $this->namespace = $function->getNamespaceName();
         $this->_importFromReflection($function);
     }
 

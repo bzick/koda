@@ -163,7 +163,7 @@ class ArgumentInfo
                 return $this;
             } elseif (isset(self::$_scalar[$_type])) {
                 $this->type = $_type;
-            } elseif ($_type == "self" && $this->cb->class) {
+            } elseif ($_type == "self" && ($this->cb instanceof MethodInfo)) {
                 $this->type  = "object";
                 $this->class = $this->cb->class;
             } else {
