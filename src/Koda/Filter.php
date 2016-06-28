@@ -44,10 +44,10 @@ class Filter
                         } elseif ($args['range']) {
                             switch ($args['range_sign']) {
                                 case '<':
-                                    $args = [PHP_INT_MIN, $args['range_value'] - 1];
+                                    $args = [-PHP_INT_MAX, $args['range_value'] - 1];
                                     break;
                                 case '<=':
-                                    $args = [PHP_INT_MIN, $args['range_value']];
+                                    $args = [-PHP_INT_MAX, $args['range_value']];
                                     break;
                                 case '>':
                                     $args = [$args['range_value'] + 1, PHP_INT_MAX];
