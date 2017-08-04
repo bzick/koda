@@ -41,6 +41,14 @@ class MethodInfo extends CallableInfoAbstract
         $this->class  = $class_name;
     }
 
+    public function getMethodName() : string {
+        return $this->method;
+    }
+
+    public function setMethodName(string $name) {
+        $this->method = $name;
+    }
+
     /**
 	 * Import method from reflection
 	 *
