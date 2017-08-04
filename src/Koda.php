@@ -7,11 +7,22 @@ use Koda\MethodInfo;
 class Koda
 {
 
-    public static function getClassInfo($class_name)
+    /**
+     *
+     * @param string $class_name
+     *
+     * @return ClassInfo
+     */
+    public static function getClassInfo(string $class_name) : ClassInfo
     {
         return new ClassInfo($class_name);
     }
 
+    /**
+     * @param $cb
+     *
+     * @return FunctionInfo|MethodInfo
+     */
     public static function getMethodInfo($cb)
     {
         if (is_array($cb)) {
@@ -24,7 +35,7 @@ class Koda
             }
         } else {
             if (strpos($cb, '::')) {
-                $cb = explode('::', $cb);
+                $cb = explode('::', $cb, 2);
 
                 return MethodInfo::scan($cb[0], $cb[1]);
             } else {
@@ -83,25 +94,14 @@ class Koda
      */
     public static function object($class_name, array $args = [], array $options = [])
     {
-        if (method_exists($class_name, "__construct")) {
-            $info = Koda\MethodInfo::scan($class_name, "__construct");
-            if ($info->hasArguments()) {
-                $filter = self::getFilter([$class_name, "__construct"],
-                    isset($options['context']) ? $options['context'] : \Koda\Filter::class);
-                if (isset($options["factory"])) {
-                    $filter->setFactory($options["factory"]);
-                }
-                if (isset($options["injector"])) {
-                    $filter->setInjector($options["injector"]);
-                }
-                $args = $info->filterArgs($args, $filter);
-
-                return new $class_name(...$args);
-            } else {
-                return new $class_name();
-            }
-        } else {
-            return new $class_name();
+        $filter = self::getFilter([$class_name, "__construct"],
+            isset($options['context']) ? $options['context'] : \Koda\Filter::class);
+        if (isset($options["factory"])) {
+            $filter->setFactory($options["factory"]);
         }
+        if (isset($options["injector"])) {
+            $filter->setInjector($options["injector"]);
+        }
+        return (new ClassInfo($class_name))->instance($args, $filter);
     }
 }

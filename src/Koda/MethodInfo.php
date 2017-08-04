@@ -4,7 +4,9 @@ namespace Koda;
 
 
 use Koda\Error;
+use Koda\Error\BaseException;
 use Koda\Error\CallableNotFoundException;
+use Koda\Error\InvalidArgumentException;
 
 class MethodInfo extends CallableInfoAbstract
 {
@@ -28,14 +30,18 @@ class MethodInfo extends CallableInfoAbstract
 		} catch (\Exception $e) {
 			throw Error::methodNotFound($class . "::" . $method);
 		}
-		$info = new static;
+		$class = is_string($class) ? $class : get_class($class);
+		$info = new static($class);
 		$info->import($me);
-		$info->class = is_string($class) ? $class : get_class($class);
 
 		return $info;
 	}
 
-	/**
+	public function __construct(string $class_name) {
+        $this->class  = $class_name;
+    }
+
+    /**
 	 * Import method from reflection
 	 *
 	 * @param \ReflectionMethod $method
@@ -44,7 +50,6 @@ class MethodInfo extends CallableInfoAbstract
 	 */
 	public function import(\ReflectionMethod $method)
 	{
-		$this->class  = $method->class;
 		$this->method = $method->name;
 		$this->name   = $method->class . "::" . $method->name;
 		$this->_importFromReflection($method);
@@ -63,7 +68,7 @@ class MethodInfo extends CallableInfoAbstract
 	 * @param Filter $filter
 	 *
 	 * @return mixed
-	 * @throws \Koda\Error\TypeCastingException
+	 * @throws BaseException
 	 */
 	public function invoke(array $params, Filter $filter = null)
 	{
@@ -71,8 +76,17 @@ class MethodInfo extends CallableInfoAbstract
 			$filter = \Koda::getFilter($this->name);
 		}
 		$args = $this->filterArgs($params, $filter);
-
-		return call_user_func_array([$filter->context ?: $this->class, $this->method], $args);
+        try {
+            return call_user_func_array([$filter->context ?: $this->class, $this->method], $args);
+        } catch (BaseException $error) {
+	        throw $error;
+        } catch (\TypeError $error) {
+            throw new InvalidArgumentException("Some of the arguments were not converted to the correct type", 0, $error);
+        } catch (\ArgumentCountError $error) {
+	        throw new InvalidArgumentException("Too few arguments are passed", 0, $error);
+        } catch (\Throwable $error) {
+            throw Error::methodCallFailed($this, $error);
+        }
 	}
 
 

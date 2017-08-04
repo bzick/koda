@@ -2,6 +2,7 @@
 
 namespace Koda\Error;
 
-class CallableNotFoundException extends CallException
+class CallableNotFoundException extends EntityNotFoundException
 {
+
 }

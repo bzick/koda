@@ -3,4 +3,4 @@
 namespace Koda\Error;
 
 
-class ClassNotFound extends \Exception {}
+class ClassNotFound extends EntityNotFoundException {}

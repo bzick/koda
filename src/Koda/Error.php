@@ -5,6 +5,7 @@ namespace Koda;
 use Koda\Error\CallableNotFoundException;
 use Koda\Error\CallException;
 use Koda\Error\ClassNotFound;
+use Koda\Error\CreateException;
 use Koda\Error\InvalidArgumentException;
 use Koda\Error\TypeCastingException;
 
@@ -18,14 +19,29 @@ class Error
 
     /**
      * @param CallableInfoAbstract $callable_info
-     * @param \Exception $error
+     * @param \Throwable $error
      *
      * @return CallException
      */
-    public static function methodCallFailed(CallableInfoAbstract $callable_info, \Exception $error = null)
+    public static function methodCallFailed(CallableInfoAbstract $callable_info, \Throwable $error = null)
     {
         $ex           = new CallException("Failed to call method $callable_info", 0, $error);
         $ex->callable = $callable_info;
+
+        return $ex;
+    }
+
+    /**
+     * @param ClassInfo $class
+     * @param MethodInfo $constructor
+     * @param \Throwable $error
+     *
+     * @return CreateException
+     */
+    public static function objectCreateFailed(ClassInfo $class, MethodInfo $constructor, \Throwable $error) {
+        $ex           = new CreateException("Failed to create instance {$class->name}", 0, $error);
+        $ex->callable = $constructor;
+        $ex->class    = $class;
 
         return $ex;
     }
@@ -63,11 +79,11 @@ class Error
     /**
      * @param ArgumentInfo $arg
      * @param string $filter
-     * @param \Exception|null $error
+     * @param \Throwable $error
      *
      * @return InvalidArgumentException
      */
-    public static function filteringFailed(ArgumentInfo $arg, $filter, \Exception $error = null)
+    public static function filteringFailed(ArgumentInfo $arg, $filter, \Throwable $error = null)
     {
         if ($error) {
             $ex = new InvalidArgumentException("Error occurred while filtering of the argument $arg: {$error->getMessage()}",
@@ -123,11 +139,11 @@ class Error
 
     /**
      * @param ArgumentInfo $arg
-     * @param \Exception $error
+     * @param \Throwable $error
      *
      * @return InvalidArgumentException
      */
-    public static function injectionFailed(ArgumentInfo $arg, \Exception $error)
+    public static function injectionFailed(ArgumentInfo $arg, \Throwable $error)
     {
         $ex           = new InvalidArgumentException(
             "Injection of object {$arg->inject} failed into $arg: {$error->getMessage()}",

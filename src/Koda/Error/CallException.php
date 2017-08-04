@@ -4,7 +4,7 @@ namespace Koda\Error;
 
 use Koda\FunctionInfo;
 
-class CallException extends \Exception
+class CallException extends BaseException
 {
 
     /**

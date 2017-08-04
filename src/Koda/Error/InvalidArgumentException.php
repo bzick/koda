@@ -2,7 +2,7 @@
 
 namespace Koda\Error;
 
-class InvalidArgumentException extends \Exception
+class InvalidArgumentException extends BaseException
 {
     // pseudo types
     const FILTER_REQUIRED = 'required';

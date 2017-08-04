@@ -2,6 +2,9 @@
 
 namespace Koda;
 
+use Koda\Error\BaseException;
+use Koda\Error\InvalidArgumentException;
+
 class ClassInfo implements \JsonSerializable
 {
 	const FLAG_NON_STATIC = 1;
@@ -133,9 +136,26 @@ class ClassInfo implements \JsonSerializable
         return $this->property[$property] ?? null;
     }
 
-	public function instance(array $params, Filter $filter = null)
+	public function instance(array $args, Filter $filter = null)
 	{
-
+	    $class_name = $this->name;
+	    $c = $this->getMethod("__construct", true);
+	    try {
+            if ($c && $c->hasArguments()) {
+                $args = $c->filterArgs($args, $filter);
+                return new $class_name(...$args);
+            } else {
+                return new $class_name();
+            }
+        } catch (BaseException $error) {
+	        throw $error;
+        } catch (\TypeError $error) {
+            throw new InvalidArgumentException("Some of the arguments were not converted to the correct type", 0, $error);
+        } catch (\ArgumentCountError $error) {
+	        throw new InvalidArgumentException("Too few arguments are passed", 0, $error);
+        } catch (\Throwable $error) {
+            throw Error::objectCreateFailed($this, $c, $error);
+        }
 	}
 
 
