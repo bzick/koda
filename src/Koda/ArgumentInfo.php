@@ -3,81 +3,21 @@
 namespace Koda;
 
 
-use Koda\Error;
 use Koda\Error\TypeCastingException;
 
-class ArgumentInfo
+class ArgumentInfo extends VariableInfoAbstract
 {
-    const SCALAR  = 1;
-    const COMPLEX = 2;
-
-    /**
-     * @var array of native types
-     */
-    public static $types = [
-        "int"      => self::SCALAR,
-        "bool"     => self::SCALAR,
-        "float"    => self::SCALAR,
-        "string"   => self::SCALAR,
-        "array"    => self::COMPLEX,
-        "NULL"     => self::COMPLEX,
-        "resource" => self::COMPLEX,
-        "callable" => self::COMPLEX,
-    ];
-
-    /**
-     * @var array of native types with priorities
-     */
-    private static $_scalar = [
-        "int"      => 9,
-        "bool"     => 7,
-        "float"    => 8,
-        "string"   => 10,
-//        "array"    => 6,
-        "NULL"     => 1,
-        "resource" => 5,
-        "callable" => 10
-    ];
-    /**
-     * Parameter name
-     * @var string
-     */
-    public $name;
-    /**
-     * Parameter description
-     * @var
-     */
-    public $desc;
     /**
      * Verification list
      * @var array[]
      */
     public $filters;
     /**
-     * Expected multiple values
+     * Is variadic parameter?
      * @var bool
      */
-    public $multiple = false;
-    /**
-     * Type of expected value (native PHP type)
-     * @var string
-     */
-    public $type;
-    /**
-     * Class name, if parameter expects object
-     * @var string
-     */
-    public $class;
-    /**
-     * Is this optional parameter?
-     * @var bool
-     */
-    public $optional = false;
-    /**
-     * Default value
-     * @var
-     */
-    public $default;
+    public $variadic = false;
+
     /**
      * Position in argument list of method (starts with 0)
      * @var int
@@ -90,11 +30,11 @@ class ArgumentInfo
     public $inject = false;
 
     /**
-     * @var CallableInfo
+     * @var CallableInfoAbstract
      */
     public $cb;
 
-    public function __construct(CallableInfo $cb)
+    public function __construct(CallableInfoAbstract $cb)
     {
         $this->cb = $cb;
     }
@@ -114,21 +54,19 @@ class ArgumentInfo
     public function import(\ReflectionParameter $param)
     {
         $this->name = $param->name;
-        if (isset($this->cb->params[$param->name])) {
-            $doc_info      = $this->cb->params[$param->name];
-            $this->desc    = $doc_info["desc"];
-            $this->filters = $doc_info["filters"];
-        } else {
-            $doc_info = false;
-        }
         $this->optional = $param->isOptional();
+        $this->variadic = $param->isVariadic();
         $this->default  = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null;
-        $this->position = $param->getPosition();
-
-        if (isset($this->filters["inject"])) {
-            $this->inject = $this->filters["inject"]["args"] ?: $param->name;
-            unset($this->filters["inject"]);
+        if ($param->isDefaultValueAvailable()) {
+            $this->default_expr = $param->isDefaultValueConstant() ? $param->getDefaultValueConstantName() : null;
         }
+        $this->position = $param->getPosition();
+        $this->callable = $param->getDeclaringFunction()->getName();
+        if ($param->hasType()) {
+            $this->type = $param->getType();
+        }
+
+
 
         if ($param->isArray()) {
             $this->multiple = true;
@@ -136,46 +74,43 @@ class ArgumentInfo
         }
 
         if ($c = $param->getClass()) {
-            $this->type  = "object";
-            $this->class = $c->name;
-        } elseif ($doc_info) {
-            $_type = $doc_info["type"];
-            if (strpos($_type, "|")) { // multitype mark as mixed
-                $this->type = null;
-
-                return $this;
-            }
-            if (strpos($_type, "[")) { // multiple values
-                $_type          = strstr($_type, "[", true);
-                $this->multiple = true;
-                if ($_type === "array") {
-                    $this->type = "array";
-
-                    return $this;
-                }
-            }
-            if ($_type === "array") {
-                $this->multiple = true;
-                $this->type     = null;
-            } elseif ($_type == "mixed") {
-                $this->type = null;
-
-                return $this;
-            } elseif (isset(self::$_scalar[$_type])) {
-                $this->type = $_type;
-            } elseif ($_type == "self" && ($this->cb instanceof MethodInfo)) {
-                $this->type  = "object";
-                $this->class = $this->cb->class;
-            } else {
-                $_type       = ltrim($_type, '\\');
-                $this->type  = "object";
-                $this->class = $_type;
-            }
+            $this->type       = "object";
+            $this->class_hint = $c->name;
+        }
+        if ($this->cb instanceof MethodInfo) {
+            $this->parseHint(
+                $this->cb->params[$param->name],
+                $this->cb->getClass(),
+                true
+            );
         } else {
-            $this->type = null;
+             $this->parseHint(
+                $this->cb->params[$param->name],
+                null,
+                true
+            );
+        }
+        if (isset($this->filters["inject"])) {
+            $this->inject = $this->filters["inject"]["args"] ?: $param->name;
+            unset($this->filters["inject"]);
         }
 
         return $this;
+    }
+
+    public function getClassName(): string
+    {
+        return $this->class_hint;
+    }
+
+    public function getClass(): ClassInfo
+    {
+        return new ClassInfo($this->name);
+    }
+
+    public function getCallableName(): string
+    {
+//        return $this->;
     }
 
     /**
@@ -253,11 +188,11 @@ class ArgumentInfo
 
                 return;
             case "object":
-                if (is_a($value, $this->class)) {
+                if (is_a($value, $this->class_hint)) {
                     return;
                 } elseif ($filter && $filter->factory) {
                     $value = $filter->factory($this, $value);
-                    if (!is_a($value, $this->class)) {
+                    if (!is_a($value, $this->class_hint)) {
                         throw Error::invalidType($this, $type);
                     }
 
@@ -288,5 +223,18 @@ class ArgumentInfo
             default:
                 settype($value, $this->type);
         }
+    }
+
+    public function __debugInfo()
+    {
+        return [
+            "name"        => $this->name,
+            "type"        => $this->type,
+            "class"       => $this->class_hint,
+            "is_optional" => $this->optional,
+            "is_variadic" => $this->variadic,
+            "default"     => $this->default,
+            "desc"        => $this->desc
+        ];
     }
 }

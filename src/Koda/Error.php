@@ -4,6 +4,7 @@ namespace Koda;
 
 use Koda\Error\CallableNotFoundException;
 use Koda\Error\CallException;
+use Koda\Error\ClassNotFound;
 use Koda\Error\InvalidArgumentException;
 use Koda\Error\TypeCastingException;
 
@@ -16,12 +17,12 @@ class Error
     const FILTER_FACTORY  = 'factory';
 
     /**
-     * @param CallableInfo $callable_info
+     * @param CallableInfoAbstract $callable_info
      * @param \Exception $error
      *
      * @return CallException
      */
-    public static function methodCallFailed(CallableInfo $callable_info, \Exception $error = null)
+    public static function methodCallFailed(CallableInfoAbstract $callable_info, \Exception $error = null)
     {
         $ex           = new CallException("Failed to call method $callable_info", 0, $error);
         $ex->callable = $callable_info;
@@ -36,7 +37,7 @@ class Error
      */
     public static function methodNotFound($method)
     {
-        return new CallableNotFoundException("Method not found {$method}");
+        return new CallableNotFoundException("Method {$method} not found");
     }
 
     /**
@@ -46,7 +47,17 @@ class Error
      */
     public static function functionNotFound($method)
     {
-        return new CallableNotFoundException("Function not found {$method}");
+        return new CallableNotFoundException("Function {$method} not found");
+    }
+
+    /**
+     * @param string $class
+     *
+     * @return ClassNotFound
+     */
+    public static function classNotFound($class)
+    {
+        return new ClassNotFound("Class {$class} not found");
     }
 
     /**
@@ -62,8 +73,7 @@ class Error
             $ex = new InvalidArgumentException("Error occurred while filtering of the argument $arg: {$error->getMessage()}",
                 0, $error);
         } else {
-            $ex = new InvalidArgumentException("Argument $arg has invalid value. Require " . $arg->filters[$filter]['original'],
-                0, $error);
+            $ex = new InvalidArgumentException("Argument $arg has invalid value. Require " . $arg->filters[$filter]['original']);
         }
         $ex->argument = $arg;
         $ex->filter   = $filter;
@@ -96,7 +106,7 @@ class Error
         if ($arg->type == "object") {
             $ex = new TypeCastingException(
                 "Argument $arg should be " .
-                ($arg->multiple ? "an array of objects {$arg->class}" : "an object {$arg->class}")
+                ($arg->multiple ? "an array of objects {$arg->class_hint}" : "an object {$arg->class_hint}")
             );
         } else {
             $ex = new TypeCastingException(
@@ -138,7 +148,7 @@ class Error
     public static function factoryFailed(ArgumentInfo $arg, \Exception $error)
     {
         $ex           = new InvalidArgumentException(
-            "Object creation of {$arg->class} failed for $arg: {$error->getMessage()}",
+            "Object creation of {$arg->class_hint} failed for $arg: {$error->getMessage()}",
             0, $error
         );
         $ex->argument = $arg;

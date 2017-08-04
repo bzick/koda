@@ -19,6 +19,31 @@ class KodaTest extends \PHPUnit_Framework_TestCase
         return $a == $b;
     }
 
+    public function testParseDocBlock() {
+        $parsed = ParseKit::parseDocBlock(<<<DOC
+    /**
+     * Description
+     * @param int[] \$a (unsigned)
+     * @param int[] \$b (value 1..10)
+     *
+     * @return bool value
+     */
+DOC
+);
+        $this->assertSame([
+            "desc" => [
+                "Description"
+            ],
+            "param" => [
+                "int[] \$a (unsigned)",
+                "int[] \$b (value 1..10)"
+            ],
+            "return" => [
+                "bool value"
+            ]
+        ], $parsed);
+    }
+
     public function providerCall()
     {
         return [

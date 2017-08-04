@@ -147,7 +147,7 @@ class Filter
     }
 
     /**
-     * Dummy validator, just for marks
+     * Dummy validator, just for markers
      * @return bool
      */
     public function isFilter()

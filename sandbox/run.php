@@ -25,7 +25,7 @@ class Example {
 	}
 }
 
-$class = new Koda\ClassInfo('Example', Koda\ClassInfo::FLAG_OBJECT, "*Calc");
+$class = new Koda\ClassInfo('Example', Koda\ClassInfo::FLAG_NON_STATIC, "*Calc");
 
 var_dump(json_encode($class, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 //var_dump(Koda::call([new Example(), 'hypotenuseCalc'], ['leg2' => 3, 'leg1' => 4]));

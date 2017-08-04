@@ -166,9 +166,12 @@ class ArgumentTest extends \PHPUnit_Framework_TestCase
             ["arrayHintRequired", [$std], $std],
 
             ["arraysRequired", [], []],
-            ["arraysRequired", null, 1],
-            ["arraysRequired", null, "z"],
-            ["arraysRequired", null, new \stdClass()],
+            ["arraysRequired", [1], 1],
+            ["arraysRequired", [1], [1]],
+            ["arraysRequired", ["z"], "z"],
+            ["arraysRequired", ["z"], ["z"]],
+            ["arraysRequired", [$std], $std],
+            ["arraysRequired", [$std], [$std]],
 
             ["arraysOptional", [[], []]],
             ["arraysOptional", [[], []], null],
@@ -217,22 +220,14 @@ class ArgumentTest extends \PHPUnit_Framework_TestCase
      *
      * @param string $method
      * @param mixed $result
-     * @param array $arg
+     * @param array $args
      *
-     * @throws Error\CallableNotFoundException
-     * @throws \Exception
+     * @throws InvalidArgumentException
+     *
      */
-    public function testCast($method, $result, $arg = null)
+    public function testCast($method, $result, ...$args)
     {
-        if (strpos($method, "Hint") && PHP_VERSION_ID < 70000) {
-            $this->markTestSkipped("PHP7 required");
-        }
         $method = MethodInfo::scan('Koda\Samples', $method);
-        if (func_num_args() > 2) {
-            $args = [$arg];
-        } else {
-            $args = [];
-        }
 
         try {
             $this->assertSame($result, $method->invoke($args));
@@ -243,8 +238,8 @@ class ArgumentTest extends \PHPUnit_Framework_TestCase
                 throw $e;
             }
         }
-        if (func_num_args() > 2) {
-            $args = ["val" => $arg];
+        if ($args) {
+            $args = ["val" => $args[0]];
         } else {
             $args = [];
         }

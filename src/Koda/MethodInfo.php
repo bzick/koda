@@ -6,10 +6,11 @@ namespace Koda;
 use Koda\Error;
 use Koda\Error\CallableNotFoundException;
 
-class MethodInfo extends CallableInfo
+class MethodInfo extends CallableInfoAbstract
 {
 
 	public $method;
+	public $class;
 
 	/**
 	 * Scan method
@@ -29,6 +30,7 @@ class MethodInfo extends CallableInfo
 		}
 		$info = new static;
 		$info->import($me);
+		$info->class = is_string($class) ? $class : get_class($class);
 
 		return $info;
 	}
@@ -46,7 +48,13 @@ class MethodInfo extends CallableInfo
 		$this->method = $method->name;
 		$this->name   = $method->class . "::" . $method->name;
 		$this->_importFromReflection($method);
+
+		return $this;
 	}
+
+	public function getClass() : ClassInfo {
+	    return new ClassInfo($this->class);
+    }
 
 	/**
 	 * Invoke method
@@ -66,4 +74,15 @@ class MethodInfo extends CallableInfo
 
 		return call_user_func_array([$filter->context ?: $this->class, $this->method], $args);
 	}
-} 
+
+
+    public function __debugInfo()
+    {
+        return [
+            "short" => $this->method,
+            "return" => $this->return,
+            "arguments" => $this->args,
+            "options" => $this->options
+        ];
+    }
+}
