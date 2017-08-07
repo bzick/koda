@@ -5,7 +5,7 @@ namespace Koda;
 
 use Koda\Error\InvalidArgumentException;
 
-class ArgumentTest extends \PHPUnit_Framework_TestCase
+class ArgumentTest extends TestCase
 {
 
     public function providerCast()
@@ -222,8 +222,7 @@ class ArgumentTest extends \PHPUnit_Framework_TestCase
      * @param mixed $result
      * @param array $args
      *
-     * @throws InvalidArgumentException
-     *
+     * @throws \Throwable
      */
     public function testCast($method, $result, ...$args)
     {
@@ -231,8 +230,9 @@ class ArgumentTest extends \PHPUnit_Framework_TestCase
 
         try {
             $this->assertSame($result, $method->invoke($args));
-        } catch (InvalidArgumentException $e) {
+        } catch (\Throwable $e) {
             if ($result === null) {
+                $this->assertInstanceOf(InvalidArgumentException::class, $e);
                 return;
             } else {
                 throw $e;

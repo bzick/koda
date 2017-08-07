@@ -5,7 +5,7 @@ namespace Koda;
 
 use Koda\Error\InvalidArgumentException;
 
-class KodaTest extends \PHPUnit_Framework_TestCase
+class KodaTest extends TestCase
 {
 
     /**

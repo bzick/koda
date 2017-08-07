@@ -21,7 +21,7 @@ class Koda
     /**
      * @param $cb
      *
-     * @return FunctionInfo|MethodInfo
+     * @return \Koda\CallableInfoAbstract
      */
     public static function getMethodInfo($cb)
     {
@@ -84,7 +84,7 @@ class Koda
     }
 
     /**
-     * @param $class_name
+     * @param string $class_name
      * @param array $args
      * @param array $options
      *
@@ -92,16 +92,15 @@ class Koda
      * @throws \Koda\Error\CallableNotFoundException
      * @throws \Koda\Error\InvalidArgumentException
      */
-    public static function object($class_name, array $args = [], array $options = [])
+    public static function object(string $class_name, array $args = [], array $options = [])
     {
-        $filter = self::getFilter([$class_name, "__construct"],
-            isset($options['context']) ? $options['context'] : \Koda\Filter::class);
+        $filter = self::getFilter([$class_name, "__construct"], $options['context'] ?? \Koda\Filter::class);
         if (isset($options["factory"])) {
             $filter->setFactory($options["factory"]);
         }
         if (isset($options["injector"])) {
             $filter->setInjector($options["injector"]);
         }
-        return (new ClassInfo($class_name))->instance($args, $filter);
+        return (new ClassInfo($class_name))->createInstance($args, $filter);
     }
 }

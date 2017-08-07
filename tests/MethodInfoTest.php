@@ -4,7 +4,7 @@ namespace Koda;
 use Koda\Error\InvalidArgumentException;
 use Koda\Samples;
 
-class MethodInfoTest extends \PHPUnit_Framework_TestCase
+class MethodInfoTest extends TestCase
 {
 
 
@@ -12,8 +12,8 @@ class MethodInfoTest extends \PHPUnit_Framework_TestCase
 	{
 		$method = MethodInfo::scan('Koda\Math', 'hypotenuse');
 		$this->assertSame('Koda\Math', $method->class);
-		$this->assertSame('hypotenuse', $method->method);
-		$this->assertSame('Koda\Math::hypotenuse', $method->name);
+		$this->assertSame('hypotenuse', $method->name);
+		$this->assertSame('Koda\Math::hypotenuse', $method->method);
 		$this->assertSame('Calculate hypotenuse', $method->desc);
 		$this->assertTrue($method->hasOption('link'));
 		$this->assertSame('https://en.wikipedia.org/wiki/Hypotenuse', $method->getOption('link'));

@@ -3,7 +3,7 @@
 namespace Koda;
 
 
-class FunctionInfoTest extends \PHPUnit_Framework_TestCase
+class FunctionInfoTest extends TestCase
 {
 
     public function testInfo()

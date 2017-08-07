@@ -3,6 +3,8 @@
 namespace Koda;
 
 
+use Koda\Error\InvalidArgumentException;
+
 abstract class VariableInfoAbstract  implements \JsonSerializable
 {
     const SCALAR  = 1;
@@ -42,12 +44,12 @@ abstract class VariableInfoAbstract  implements \JsonSerializable
      * Parameter name
      * @var string
      */
-    public $name;
+    public $name = "";
     /**
      * Parameter description
      * @var
      */
-    public $desc;
+    public $desc = "";
     /**
      * Expected multiple values
      * @var bool
@@ -80,12 +82,38 @@ abstract class VariableInfoAbstract  implements \JsonSerializable
     abstract public function __debugInfo();
 
 
-    public function parseHint(string $hint_info, ClassInfo $scope = null, bool $parse_filters = true) {
+    /**
+     * @param array|string $hint_info
+     * @param ClassInfo $scope
+     * @param bool $parse_filters
+     *
+     * @throws InvalidArgumentException
+     */
+    public function parseHint($hint_info, ClassInfo $scope = null, bool $parse_filters = true) {
 
-        if (preg_match('/^(.*?)\s+\$(\w+)\s*(?:\(([^\)]+)\))?/mS', $hint_info, $matches)) {
-            if (!$this->type) {
-                $this->type = $matches[1];
-                if (strpos($matches[1], "|")) { // multitype mark as mixed
+        if (is_string($hint_info)) {
+            if (preg_match('/^(.*?)\s+\$(\w+)\s*(?:\(([^\)]+)\))?/mS', $hint_info, $matches)) {
+                $inf = [
+                    "type" => $matches[1] ?? '',
+                    "name" => $matches[2] ?? '',
+                    "filters" => $matches[3] ?? '',
+                    "desc" => trim(substr($hint_info, strlen($matches[0])))
+                ];
+            } else {
+                $inf = false;
+            }
+        } elseif (is_array($hint_info)) {
+            $inf = $hint_info + ["type" => "", "name" => "", "filters" => "", "desc" => ""];
+        } else {
+            throw new InvalidArgumentException("Invalid doc-block of $this");
+        }
+        if ($inf) {
+            if (!$this->name && $inf["name"]) {
+                $this->name = $inf["name"];
+            }
+            if (!$this->type && $inf["type"]) {
+                $this->type = $inf["type"];
+                if (strpos($this->type, "|")) { // multitype mark as mixed
                     $this->type = null;
                 } else if (strpos($this->type, "[")) { // multiple values
                     $this->type = strstr($this->type, "[", true);
@@ -109,13 +137,15 @@ abstract class VariableInfoAbstract  implements \JsonSerializable
                 }
             }
 
-            if(isset($matches[3])) {
+            if($inf["filters"]) {
                 if($parse_filters) {
-                    $this->desc = trim(substr($hint_info, strlen($matches[0])));
-                    $this->filters = Filter::parseDoc($matches[3]);
+                    $this->desc .= $inf["desc"];
+                    $this->filters = Filter::parseDoc($inf["filters"]);
                 } else {
-                    $this->desc = $matches[3] . trim(substr($hint_info, strlen($matches[0])));
+                    $this->desc .= $inf["filters"] . ' ' . $inf["desc"];
                 }
+            } else {
+                $this->desc .= $inf["desc"];
             }
         }
     }

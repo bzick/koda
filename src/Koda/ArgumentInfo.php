@@ -41,7 +41,18 @@ class ArgumentInfo extends VariableInfoAbstract
 
     public function __toString()
     {
-        return $this->cb->name . "(\$" . $this->name . ")";
+        return $this->getName();
+    }
+
+    public function getName($index = null) : string
+    {
+        if ($index === null) {
+            return $this->cb . "(\$" . $this->name . ")";
+        } elseif(strlen($index) < 128 || !is_string($index)) {
+            return $this->cb . "(\$" . $this->name . "[" . $index . "])";
+        } else {
+            return $this->cb . "(\$" . $this->name . "[" . substr($index, 0, 128) . "...])";
+        }
     }
 
     /**
@@ -77,18 +88,20 @@ class ArgumentInfo extends VariableInfoAbstract
             $this->type       = "object";
             $this->class_hint = $c->name;
         }
-        if ($this->cb instanceof MethodInfo) {
-            $this->parseHint(
-                $this->cb->params[$param->name],
-                $this->cb->getClass(),
-                true
-            );
-        } else {
-             $this->parseHint(
-                $this->cb->params[$param->name],
-                null,
-                true
-            );
+        if (isset($this->cb->params[$param->name])) {
+            if ($this->cb instanceof MethodInfo) {
+                $this->parseHint(
+                    $this->cb->params[$param->name],
+                    $this->cb->getClass(),
+                    true
+                );
+            } else {
+                $this->parseHint(
+                    $this->cb->params[$param->name],
+                    null,
+                    true
+                );
+            }
         }
         if (isset($this->filters["inject"])) {
             $this->inject = $this->filters["inject"]["args"] ?: $param->name;
@@ -134,8 +147,8 @@ class ArgumentInfo extends VariableInfoAbstract
         }
         if ($this->type) {
             if ($this->multiple) {
-                foreach ($value as &$v) {
-                    $arg->toType($v, $filter);
+                foreach ($value as $index => &$v) {
+                    $arg->toType($v, $filter, $index);
                 }
             } else {
                 $this->toType($value, $filter);
@@ -174,16 +187,17 @@ class ArgumentInfo extends VariableInfoAbstract
      *
      * @param mixed $value
      * @param Filter $filter
+     * @param mixed $index
      *
      * @throws TypeCastingException
      */
-    public function toType(&$value, Filter $filter = null)
+    public function toType(&$value, Filter $filter = null, $index = null)
     {
         $type = gettype($value);
         switch ($this->type) {
             case "callable":
                 if (!is_callable($value)) {
-                    throw Error::invalidType($this, $type);
+                    throw Error::invalidType($this, $value, $index);
                 }
 
                 return;
@@ -193,28 +207,28 @@ class ArgumentInfo extends VariableInfoAbstract
                 } elseif ($filter && $filter->factory) {
                     $value = $filter->factory($this, $value);
                     if (!is_a($value, $this->class_hint)) {
-                        throw Error::invalidType($this, $type);
+                        throw Error::invalidType($this, $value, $index);
                     }
 
                     return;
                 } else {
-                    throw Error::invalidType($this, $type);
+                    throw Error::invalidType($this, $value, $index);
                 }
             case "array":
                 if (!is_array($value)) {
-                    throw Error::invalidType($this, $type);
+                    throw Error::invalidType($this, $value, $index);
                 }
 
                 return;
         }
         if ($type == "object" || $type == "array") {
-            throw Error::invalidType($this, $type);
+            throw Error::invalidType($this, $value, $index);
         }
         switch ($this->type) {
             case "int":
             case "float":
                 if (!is_numeric($value)) {
-                    throw Error::invalidType($this, $type);
+                    throw Error::invalidType($this, $value, $index);
                 } else {
                     settype($value, $this->type);
                 }

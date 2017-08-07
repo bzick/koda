@@ -11,7 +11,7 @@ use Koda\Error\InvalidArgumentException;
 class MethodInfo extends CallableInfoAbstract
 {
 
-	public $method;
+	public $method = '';
 	public $class;
 
 	/**
@@ -58,8 +58,8 @@ class MethodInfo extends CallableInfoAbstract
 	 */
 	public function import(\ReflectionMethod $method)
 	{
-		$this->method = $method->name;
-		$this->name   = $method->class . "::" . $method->name;
+		$this->name   = $method->name;
+		$this->method = $method->class . "::" . $method->name;
 		$this->_importFromReflection($method);
 
 		return $this;
@@ -106,5 +106,10 @@ class MethodInfo extends CallableInfoAbstract
             "arguments" => $this->args,
             "options" => $this->options
         ];
+    }
+
+    public function __toString()
+    {
+        return $this->method;
     }
 }

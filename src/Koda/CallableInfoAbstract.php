@@ -7,6 +7,7 @@ use Koda\Error\InvalidArgumentException;
 
 abstract class CallableInfoAbstract  implements \JsonSerializable
 {
+    use OptionsTrait;
 
 	public $namespace;
 	public $name;
@@ -20,7 +21,6 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
 	 * @var ReturnInfo
 	 */
 	public $return;
-	public $options = [];
 	public $params  = [];
 
 	public function getDescription()
@@ -105,21 +105,6 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
 	 */
 	abstract public function invoke(array $params, Filter $filter);
 	abstract public function __debugInfo();
-
-	public function hasOption($option)
-	{
-		return !empty($this->options[$option]);
-	}
-
-	public function getOption($option, $index = 0)
-	{
-		return !empty($this->options[$option][$index]) ? $this->options[$option][$index] : null;
-	}
-
-	public function getOptions($option)
-	{
-		return isset($this->options[$option]) ? $this->options[$option] : [];
-	}
 
 	public function hasArgument($name) : bool
 	{

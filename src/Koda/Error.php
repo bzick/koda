@@ -113,23 +113,27 @@ class Error
 
     /**
      * @param ArgumentInfo $arg
-     * @param string $from_type
+     * @param mixed $value
+     * @param mixed $index
      *
      * @return TypeCastingException
      */
-    public static function invalidType(ArgumentInfo $arg, $from_type)
+    public static function invalidType(ArgumentInfo $arg, &$value, $index)
     {
+        $from_type = gettype($value);
         if ($arg->type == "object") {
-            $ex = new TypeCastingException(
-                "Argument $arg should be " .
-                ($arg->multiple ? "an array of objects {$arg->class_hint}" : "an object {$arg->class_hint}")
-            );
+            $message = "Argument " . $arg->getName($index) . " should be "
+                . ($arg->multiple ? "an array of objects {$arg->class_hint}" : "an object {$arg->class_hint}");
         } else {
-            $ex = new TypeCastingException(
-                "Argument $arg should be " .
-                ($arg->multiple ? "an array of {$arg->type}s" : "{$arg->type}")
-            );
+           $message =  "Argument " . $arg->getName($index) . " should be "
+               . ($arg->multiple ? "an array of {$arg->type}s" : "{$arg->type}");
         }
+        if ($from_type == "object") {
+            $message .= ", $from_type ".get_class($value)." given";
+        } else {
+            $message .= ", $from_type given";
+        }
+        $ex = new TypeCastingException($message);
         $ex->argument  = $arg;
         $ex->filter    = self::FILTER_CAST;
         $ex->from_type = $from_type;

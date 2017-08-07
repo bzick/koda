@@ -7,6 +7,8 @@ use Koda\Error\InvalidArgumentException;
 
 class ClassInfo implements \JsonSerializable
 {
+    use OptionsTrait;
+
 	const FLAG_NON_STATIC = 1;
 	const FLAG_STATIC     = 2;
 	const FLAG_INHERITED  = 4;
@@ -14,19 +16,22 @@ class ClassInfo implements \JsonSerializable
 	const FLAG_PROTECTED  = 16;
 	const FLAG_PRIVATE    = 32;
 
+	const FLAG_DOCBLOCK   = 64;
+	const FLAG_CONSTRUCT  = 128;
+
 	const FLAG_ALL   = self::FLAG_NON_STATIC | self::FLAG_STATIC    | self::FLAG_INHERITED |
                        self::FLAG_PUBLIC     | self::FLAG_PROTECTED | self::FLAG_PRIVATE;
 
 	/**
 	 * @var MethodInfo[]
 	 */
-	public $methods  = [];
-	public $constant = [];
-	public $property = [];
-	/**
-	 * @var array
-	 */
-	public $options = [];
+	public $methods    = [];
+	public $constant   = [];
+	public $properties = [];
+    /**
+     * @var string Parent class
+     */
+	public $parent = "";
 	/**
 	 * @var string
 	 */
@@ -41,43 +46,64 @@ class ClassInfo implements \JsonSerializable
         } catch (\Exception $e) {
             throw Error::classNotFound($name);
         }
-        $info = new static($name);
+        $class = new static($name);
+        $class->import($ce);
         if (isset($options["method"])) {
-            $flags = self::decodeFlags($options["methods"], \ReflectionMethod::IS_FINAL | \ReflectionMethod::IS_ABSTRACT);
+            $flags = self::decodeFlags($options["method"], \ReflectionMethod::IS_FINAL | \ReflectionMethod::IS_ABSTRACT);
+            if (($options["method"] & self::FLAG_CONSTRUCT) && method_exists($name, "__construct")) {
+                $class->addMethod(MethodInfo::scan($name, "__construct"));
+            }
             foreach ($ce->getMethods($flags) as $me) {
-                if (!$me->isStatic() && !($options["methods"] & self::FLAG_NON_STATIC)) {
-                    continue; // skip none static methods if option do not have a flag FLAG_NON_STATIC
+                 if ($me->isStatic()) {
+                    if (!($options["property"] & self::FLAG_STATIC)) {
+                        continue;
+                    }
+                } else {
+                    if (!($options["property"] & self::FLAG_NON_STATIC)) {
+                        continue;
+                    }
                 }
-                if ($me->class !== $name && !($options["methods"] & self::FLAG_INHERITED)) {
+                if ($me->class !== $name && !($options["method"] & self::FLAG_INHERITED)) {
                     continue; // skip methods from another classes if option do not have a flag FLAG_INHERITED
                 }
 
-                $mi = new MethodInfo();
+                $mi = new MethodInfo($class);
                 $mi->import($me);
-                $info->addMethod($mi);
+                $class->addMethod($mi);
             }
         }
 
         if (isset($options["property"])) {
             $flags = self::decodeFlags($options["property"], 0);
             foreach ($ce->getProperties($flags) as $prop) {
-                if (!$prop->isStatic() && !($options["property"] & self::FLAG_NON_STATIC)) {
-                    continue; // skip none static methods if option do not have a flag FLAG_NON_STATIC
+                if ($prop->isStatic()) {
+                    if (!($options["property"] & self::FLAG_STATIC)) {
+                        continue;
+                    }
+                } else {
+                    if (!($options["property"] & self::FLAG_NON_STATIC)) {
+                        continue;
+                    }
                 }
                 if ($prop->class !== $name && !($options["property"] & self::FLAG_INHERITED)) {
                     continue; // skip methods from another classes if option do not have a flag FLAG_INHERITED
                 }
 
-                $pi = new PropertyInfo($info);
-                $pi->import($prop);
-                $info->addProperty($pi);
+                $pi = new PropertyInfo($class);
+                $pi->import($prop, $ce);
+                $class->addProperty($pi);
+            }
+
+            if ($options["property"] & self::FLAG_DOCBLOCK && $class->hasOption("property")) {
+                foreach ($class->getOptions("property") as $val) {
+                    $pi = new PropertyInfo($class);
+                    $pi->parseHint($val, $class, false);
+                    $class->addProperty($pi);
+                }
             }
         }
 
-
-
-
-        return $info;
+        return $class;
     }
 
     private static function decodeFlags(int $flags, int $start = 0) : int {
@@ -96,6 +122,25 @@ class ClassInfo implements \JsonSerializable
 	{
         $this->name = $class_name;
 	}
+
+    /**
+     * @param \ReflectionClass|null $class
+     *
+     * @return $this
+     */
+	public function import(\ReflectionClass $class = null) {
+	    if(!$class) {
+	        $class = new \ReflectionClass($this->name);
+        }
+        if ($pc = $class->getParentClass()) {
+	        $this->parent = $pc->name;
+        }
+	    if ($doc = $class->getDocComment()) {
+            $this->options = ParseKit::parseDocBlock($doc);
+        }
+
+        return $this;
+    }
 
 	public function __toString()
 	{
@@ -117,26 +162,78 @@ class ClassInfo implements \JsonSerializable
 		} elseif (method_exists($this->name, $method) && $autoscan) {
 			return $this->methods[$method] = MethodInfo::scan($this->name, $method);
 		} else {
-			return false;
+			return null;
 		}
 	}
 
+    /**
+     * @param MethodInfo $method
+     */
 	public function addMethod(MethodInfo $method)
     {
         $this->methods[$method->name] = $method;
     }
 
+    /**
+     * @param string $method
+     *
+     * @return bool
+     */
+    public function hasMethod(string $method) : bool {
+        return isset($this->methods[$method]);
+    }
+
+    /**
+     * @param PropertyInfo $prop
+     */
     public function addProperty(PropertyInfo $prop)
     {
-        $this->methods[$prop->name] = $prop;
+        $this->properties[$prop->name] = $prop;
     }
 
+    /**
+     * @param string $property
+     *
+     * @return mixed
+     */
 	public function getProperty(string $property)
     {
-        return $this->property[$property] ?? null;
+        return $this->properties[$property] ?? null;
     }
 
-	public function instance(array $args, Filter $filter = null)
+    /**
+     * @param string $property
+     *
+     * @return bool
+     */
+    public function hasProperty(string $property) : bool {
+	    return isset($this->properties[$property]);
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasParentClass() : bool {
+        return (bool)$this->parent;
+    }
+
+    /**
+     * @return string
+     */
+    public function getParentClassName() : string {
+        return $this->parent;
+    }
+
+    /**
+     * @param array $args
+     * @param Filter|null $filter
+     *
+     * @return mixed
+     * @throws BaseException
+     * @throws Error\CreateException
+     * @throws InvalidArgumentException
+     */
+	public function createInstance(array $args, Filter $filter = null)
 	{
 	    $class_name = $this->name;
 	    $c = $this->getMethod("__construct", true);
@@ -161,8 +258,9 @@ class ClassInfo implements \JsonSerializable
 
 	public function __debugInfo() {
 	    return [
-            "class" => $this->class,
-            "methods" => $this->class,
+            "class" => $this->name,
+            "methods" => $this->methods,
+            "properties" => $this->properties,
         ];
     }
 

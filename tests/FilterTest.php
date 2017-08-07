@@ -3,7 +3,7 @@
 namespace Koda;
 
 
-class FilterTest extends \PHPUnit_Framework_TestCase
+class FilterTest extends TestCase
 {
 
 	public $verify;

@@ -5,6 +5,7 @@ namespace Koda;
 
 class PropertyInfo extends VariableInfoAbstract
 {
+    use OptionsTrait;
 
     /**
      * @var string
@@ -16,17 +17,29 @@ class PropertyInfo extends VariableInfoAbstract
         $this->class = $class->name;
     }
 
-    public function import(\ReflectionProperty $prop)
+    public function import(\ReflectionProperty $prop, \ReflectionClass $rc = null)
     {
         $this->class    = $prop->class;
         $this->name     = $prop->getName();
         $this->optional = $prop->isDefault();
-        $this->default  = $prop->isDefault() ? $prop->getValue() : null;
+        if ($prop->isStatic()) {
+            $this->default  = $prop->isDefault() ? $prop->getValue() : null;
+        } else {
+            if (!$rc) {
+                $rc = new \ReflectionClass($this->class);
+            }
+            $this->default  = $rc->getDefaultProperties()[$this->name];
+        }
         $doc = $prop->getDocComment();
         if ($doc) {
-            $options = ParseKit::parseDocBlock($doc);
-            if (isset($options["var"])) {
-
+            $this->options = ParseKit::parseDocBlock($doc);
+            if ($this->hasOption('var')) {
+                $parsed = preg_split('/\s+/S', $this->getOption('var'), 2);
+                $this->parseHint([
+                    "type" => $parsed[0],
+                    "name" => $this->name,
+                    "desc" => ($parsed[1] ?? '')
+                ], new ClassInfo($this->name));
             }
         }
     }
