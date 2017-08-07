@@ -8,7 +8,7 @@ use Koda\Error\InvalidArgumentException;
  * Data verification
  * (count 7, value >7, value <=8, count 1..4, file, date %Y-%m-%d, keyword)
  */
-class Filter
+class Handler
 {
     public $context;
     public $injector;
@@ -94,6 +94,14 @@ class Filter
         return $this;
     }
 
+    /**
+     * Makes the injection
+     * @param ArgumentInfo $info
+     * @param mixed $value given value
+     *
+     * @return mixed
+     * @throws InvalidArgumentException
+     */
     public function injection(ArgumentInfo $info, $value = null)
     {
         try {

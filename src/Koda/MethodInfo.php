@@ -73,12 +73,12 @@ class MethodInfo extends CallableInfoAbstract
 	 * Invoke method
 	 *
 	 * @param array $params
-	 * @param Filter $filter
+	 * @param Handler $filter
 	 *
 	 * @return mixed
 	 * @throws BaseException
 	 */
-	public function invoke(array $params, Filter $filter = null)
+	public function invoke(array $params, Handler $filter = null)
 	{
 		if (!$filter) {
 			$filter = \Koda::getFilter($this->name);

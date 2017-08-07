@@ -44,13 +44,13 @@ class Koda
         }
     }
 
-    public static function getFilter($cb, $class_name = \Koda\Filter::class)
+    public static function getFilter($cb, $class_name = \Koda\Handler::class)
     {
         if (is_object($cb)) {
             if ($cb instanceof Closure) {
-                return new \Koda\Filter(null);
+                return new \Koda\Handler(null);
             } else {
-                return new \Koda\Filter($cb);
+                return new \Koda\Handler($cb);
             }
         } else {
             if (is_array($cb) && is_object($cb[0])) {
@@ -72,7 +72,7 @@ class Koda
     public static function call($cb, array $args = [], array $options = [])
     {
         $info   = self::getMethodInfo($cb);
-        $filter = self::getFilter($cb, isset($options['context']) ? $options['context'] : \Koda\Filter::class);
+        $filter = self::getFilter($cb, isset($options['context']) ? $options['context'] : \Koda\Handler::class);
         if (isset($options["factory"])) {
             $filter->setFactory($options["factory"]);
         }
@@ -94,7 +94,7 @@ class Koda
      */
     public static function object(string $class_name, array $args = [], array $options = [])
     {
-        $filter = self::getFilter([$class_name, "__construct"], $options['context'] ?? \Koda\Filter::class);
+        $filter = self::getFilter([$class_name, "__construct"], $options['context'] ?? \Koda\Handler::class);
         if (isset($options["factory"])) {
             $filter->setFactory($options["factory"]);
         }

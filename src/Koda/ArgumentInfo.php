@@ -130,13 +130,13 @@ class ArgumentInfo extends VariableInfoAbstract
      * Convert value to required type (with validation if verify present)
      *
      * @param mixed $value
-     * @param Filter $filter
+     * @param Handler $filter
      *
      * @return mixed
      * @throws Error\InvalidArgumentException
      * @throws TypeCastingException
      */
-    public function filter($value, Filter $filter = null)
+    public function filter($value, Handler $filter = null)
     {
 //        $type = gettype($value);
         $arg = $this;
@@ -186,12 +186,12 @@ class ArgumentInfo extends VariableInfoAbstract
      * Type casting
      *
      * @param mixed $value
-     * @param Filter $filter
+     * @param Handler $filter
      * @param mixed $index
      *
      * @throws TypeCastingException
      */
-    public function toType(&$value, Filter $filter = null, $index = null)
+    public function toType(&$value, Handler $filter = null, $index = null)
     {
         $type = gettype($value);
         switch ($this->type) {

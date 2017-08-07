@@ -42,12 +42,12 @@ class FunctionInfo extends CallableInfoAbstract
      * Invoke function
      *
      * @param array $params
-     * @param Filter $filter
+     * @param Handler $filter
      *
      * @return mixed
      * @throws \Koda\Error\TypeCastingException
      */
-    public function invoke(array $params, Filter $filter)
+    public function invoke(array $params, Handler $filter)
     {
         $args = $this->filterArgs($params, $filter);
 

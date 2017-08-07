@@ -140,7 +140,7 @@ abstract class VariableInfoAbstract  implements \JsonSerializable
             if($inf["filters"]) {
                 if($parse_filters) {
                     $this->desc .= $inf["desc"];
-                    $this->filters = Filter::parseDoc($inf["filters"]);
+                    $this->filters = Handler::parseDoc($inf["filters"]);
                 } else {
                     $this->desc .= $inf["filters"] . ' ' . $inf["desc"];
                 }

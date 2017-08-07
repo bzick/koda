@@ -226,14 +226,14 @@ class ClassInfo implements \JsonSerializable
 
     /**
      * @param array $args
-     * @param Filter|null $filter
+     * @param Handler|null $filter
      *
      * @return mixed
      * @throws BaseException
      * @throws Error\CreateException
      * @throws InvalidArgumentException
      */
-	public function createInstance(array $args, Filter $filter = null)
+	public function createInstance(array $args, Handler $filter = null)
 	{
 	    $class_name = $this->name;
 	    $c = $this->getMethod("__construct", true);

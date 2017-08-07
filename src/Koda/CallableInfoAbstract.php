@@ -62,13 +62,13 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
 
 	/**
 	 * @param array $params
-	 * @param Filter $filter
+	 * @param Handler $filter
 	 *
 	 * @return array
 	 * @throws \Koda\Error\TypeCastingException
 	 * @throws InvalidArgumentException
 	 */
-	public function filterArgs(array $params, Filter $filter)
+	public function filterArgs(array $params, Handler $filter)
 	{
 		$args = [];
 		foreach ($this->args as $name => $arg) {
@@ -98,12 +98,12 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
 	 * Invoke callback
 	 *
 	 * @param array $params
-	 * @param Filter $filter
+	 * @param Handler $filter
 	 *
 	 * @return mixed
 	 * @throws \Koda\Error\TypeCastingException
 	 */
-	abstract public function invoke(array $params, Filter $filter);
+	abstract public function invoke(array $params, Handler $filter);
 	abstract public function __debugInfo();
 
 	public function hasArgument($name) : bool

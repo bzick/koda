@@ -3,7 +3,7 @@
 namespace Koda;
 
 
-class FilterTest extends TestCase
+class HandlerTest extends TestCase
 {
 
 	public $verify;
@@ -25,7 +25,7 @@ class FilterTest extends TestCase
 
 	public function setUp()
 	{
-		$this->verify = new Filter($this);
+		$this->verify = new Handler($this);
 	}
 
 	public function providerValidators()
@@ -96,8 +96,8 @@ class FilterTest extends TestCase
 			["callback", true, "is_string"],
 			["callback", false, "is_string2"],
 
-			["className", true, FilterTest::class],
-			["className", false, FilterTest::class . "Invalid"],
+			["className", true, HandlerTest::class],
+			["className", false, HandlerTest::class . "Invalid"],
 
 			["file", true, __FILE__],
 			["file", false, '/unexists'],
@@ -122,11 +122,11 @@ class FilterTest extends TestCase
 			["variants", false, 'v3', ["v1", "v2"]],
 			["variants", true, 'v1', "v1 v2"],
 			["variants", false, 'v3', "v1 v2"],
-			["variants", true, 'v1', FilterTest::class . '::variants'],
-			["variants", false, 'v3', FilterTest::class . '::variants'],
+			["variants", true, 'v1', HandlerTest::class . '::variants'],
+			["variants", false, 'v3', HandlerTest::class . '::variants'],
 
-			["option", true, 'v1', FilterTest::class . '::options'],
-			["option", false, 'v3', FilterTest::class . '::options'],
+			["option", true, 'v1', HandlerTest::class . '::options'],
+			["option", false, 'v3', HandlerTest::class . '::options'],
 
 			["equals", true, 'v3', 'v3'],
 			["equals", false, 'v3', 'v4'],
