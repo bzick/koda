@@ -5,10 +5,10 @@ php:
   - 7.1
 
 before_script:
-  - composer update
+  - composer global require satooshi/php-coveralls
 
 script:
   - phpunit -c phpunit.xml.dist
 
 after_script:
-  - php vendor/bin/coveralls
+  - coveralls
