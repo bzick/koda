@@ -6,6 +6,7 @@ php:
 
 before_script:
   - composer global require satooshi/php-coveralls
+  - composer install --no-dev
 
 script:
   - phpunit -c phpunit.xml.dist
