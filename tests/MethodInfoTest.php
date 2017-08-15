@@ -2,7 +2,6 @@
 namespace Koda;
 
 use Koda\Error\InvalidArgumentException;
-use Koda\Samples;
 
 class MethodInfoTest extends TestCase
 {
@@ -32,7 +31,7 @@ class MethodInfoTest extends TestCase
 		$this->assertNull($leg1->default);
 		$this->assertSame('first cathetus of triangle', $leg1->desc);
 		$this->assertSame(0, $leg1->position);
-		$this->assertEquals(['unsigned' => ['original' => 'unsigned', 'args' => true]], $leg1->filters);
+		$this->assertEquals(['unsigned' => ['original' => 'unsigned', 'args' => ""]], $leg1->filters);
 
 		// round
 		$round = $method->args['round'];

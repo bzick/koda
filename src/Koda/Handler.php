@@ -68,7 +68,7 @@ class Handler
                         $args = $arg;
                     }
                 } else {
-                    $args = true;
+                    $args = "";
                 }
                 $verify[$filter] = [
                     "original" => $m[1][$k],
