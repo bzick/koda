@@ -7,6 +7,7 @@ use Koda\Error;
 use Koda\Error\BaseException;
 use Koda\Error\CallableNotFoundException;
 use Koda\Error\InvalidArgumentException;
+use Koda\Error\TypeCastingException;
 
 class MethodInfo extends CallableInfoAbstract
 {
@@ -89,7 +90,7 @@ class MethodInfo extends CallableInfoAbstract
         } catch (BaseException $error) {
 	        throw $error;
         } catch (\TypeError $error) {
-            throw new InvalidArgumentException("Some of the arguments were not converted to the correct type", 0, $error);
+            throw new TypeCastingException("Some of the arguments were not converted to the correct type", 0, $error);
         } catch (\ArgumentCountError $error) {
 	        throw new InvalidArgumentException("Too few arguments are passed", 0, $error);
         } catch (\Throwable $error) {
