@@ -28,17 +28,48 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
 		return $this->desc;
 	}
 
-	public function hasArguments()
+	public function hasArguments() : bool
 	{
 		return (bool)$this->args;
 	}
 
-	public function getArguments()
+	public function getArguments() : array
 	{
 		return $this->args;
 	}
 
-	public function getReturn()
+	public function hasArgument(string $name) : bool
+    {
+	    return isset($this->args[$name]);
+    }
+
+	public function setArgument(ArgumentInfo $arg) : self
+    {
+        $this->args[$arg->name] = $arg;
+        return $this;
+    }
+
+    public function getArgument($name)
+    {
+        if ($this->hasArgument($name)) {
+            return $this->args[$name];
+        } else {
+            throw new \InvalidArgumentException("Argument $name not found in $this");
+        }
+    }
+
+    public function setReturn(ReturnInfo $return) : self
+    {
+        $this->return = $return;
+        return $this;
+    }
+
+    public function hasReturn() : bool
+    {
+        return boolval($this->return);
+    }
+
+	public function getReturn() : ReturnInfo
 	{
 		return $this->return;
 	}
@@ -47,6 +78,12 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
 	{
 		return $this->name;
 	}
+
+	public function setName(string $name) : self
+    {
+        $this->name = $name;
+        return $this;
+    }
 
 	public function hasClass() : bool {
 	    return $this->class;
@@ -105,16 +142,6 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
 	 */
 	abstract public function invoke(array $params, Handler $filter);
 	abstract public function __debugInfo();
-
-	public function hasArgument($name) : bool
-	{
-		return isset($this->args[$name]);
-	}
-
-	public function getArgument($name)
-	{
-		return isset($this->args[$name]) ? $this->args[$name] : false;
-	}
 
 	/**
 	 * Import callable info from reflection
