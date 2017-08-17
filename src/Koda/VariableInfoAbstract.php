@@ -18,7 +18,6 @@ abstract class VariableInfoAbstract  implements \JsonSerializable
         "bool"     => 7,
         "float"    => 8,
         "string"   => 10,
-//        "array"    => 6,
         "NULL"     => 1,
         "resource" => 5,
         "callable" => 10
@@ -111,30 +110,8 @@ abstract class VariableInfoAbstract  implements \JsonSerializable
             if (!$this->name && $inf["name"]) {
                 $this->name = $inf["name"];
             }
-            if (!$this->type && $inf["type"]) {
-                $this->type = $inf["type"];
-                if (strpos($this->type, "|")) { // multitype mark as mixed
-                    $this->type = null;
-                } else if (strpos($this->type, "[")) { // multiple values
-                    $this->type = strstr($this->type, "[", true);
-                    $this->multiple = true;
-                }
-                if ($this->type == "array") {
-                    $this->type = null;
-                    $this->multiple = true;
-                } else if ($this->type == "mixed") {
-                    $this->type  = null;
-                } else if ($this->type == "self" && $scope) {
-                    $this->type       = "object";
-                    $this->class_hint = $scope->name;
-                } else if (!isset(self::SCALARS[$this->type])) { // select class
-                    if ($this->type{0} === "\\") { // absolute class name
-                        $this->class_hint = ltrim($this->type, '\\');
-                    } else if($scope) {
-                        $this->class_hint = ltrim($scope->namespace . '\\' . $this->type, '\\');
-                    }
-                    $this->type = "object";
-                }
+            if (!$this->hasType()) {
+                $this->setType($inf["type"], $scope);
             }
 
             if($inf["filters"]) {
@@ -157,9 +134,58 @@ abstract class VariableInfoAbstract  implements \JsonSerializable
      * which is a value of any type other than a resource.
      * @since 5.4.0
      */
-    function jsonSerialize()
+    public function jsonSerialize()
     {
         return $this->__debugInfo();
+    }
+
+    public function getDescription() : string
+    {
+        return $this->desc;
+    }
+
+    public function setDescription(string $desc)
+    {
+        $this->desc = $desc;
+        return $this;
+    }
+
+    public function hasType()
+    {
+        return (bool)$this->type;
+    }
+
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type, ClassInfo $scope = null) : self
+    {
+        $this->type = $type;
+        if (strpos($this->type, "|")) { // multitype mark as mixed
+            $this->type = null;
+        } else if (strpos($this->type, "[")) { // multiple values
+            $this->type = strstr($this->type, "[", true);
+            $this->multiple = true;
+        }
+        if ($this->type == "array") {
+            $this->type = null;
+            $this->multiple = true;
+        } else if ($this->type == "mixed") {
+            $this->type  = null;
+        } else if ($this->type == "self" && $scope) {
+            $this->type       = "object";
+            $this->class_hint = $scope->name;
+        } else if (!isset(self::SCALARS[$this->type])) { // select class
+            if ($this->type{0} === "\\") { // absolute class name
+                $this->class_hint = ltrim($this->type, '\\');
+            } else if($scope) {
+                $this->class_hint = ltrim($scope->namespace . '\\' . $this->type, '\\');
+            }
+            $this->type = "object";
+        }
+        return $this;
     }
 
 }

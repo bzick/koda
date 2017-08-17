@@ -35,24 +35,9 @@ class ReturnInfo extends VariableInfoAbstract
         }
     }
 
-    public function hasType()
-    {
-        return (bool)$this->type;
-    }
-
-    public function getType()
-    {
-        return $this->type;
-    }
-
     public function getClass()
     {
         return $this->class;
-    }
-
-    public function getDescription()
-    {
-        return $this->desc;
     }
 
     /**
