@@ -9,6 +9,9 @@ class ClassInfo implements \JsonSerializable
 {
     use OptionsTrait;
 
+    const METHODS = "method";
+    const PROPS   = "property";
+
 	const FLAG_NON_STATIC = 1;
 	const FLAG_STATIC     = 2;
 	const FLAG_INHERITED  = 4;
@@ -48,23 +51,27 @@ class ClassInfo implements \JsonSerializable
         }
         $class = new static($name);
         $class->import($ce);
-        if (isset($options["method"])) {
-            $flags = self::decodeFlags($options["method"], \ReflectionMethod::IS_FINAL | \ReflectionMethod::IS_ABSTRACT);
-            if (($options["method"] & self::FLAG_CONSTRUCT) && method_exists($name, "__construct")) {
+        if (isset($options[self::METHODS])) {
+            $flags = self::decodeFlags($options[self::METHODS], \ReflectionMethod::IS_FINAL | \ReflectionMethod::IS_ABSTRACT);
+            if (($options[self::METHODS] & self::FLAG_CONSTRUCT) && method_exists($name, "__construct")) {
                 $class->addMethod(MethodInfo::scan($name, "__construct"));
             }
             foreach ($ce->getMethods($flags) as $me) {
                  if ($me->isStatic()) {
-                    if (!($options["property"] & self::FLAG_STATIC)) {
+                    if (!($options[self::METHODS] & self::FLAG_STATIC)) {
                         continue;
                     }
                 } else {
-                    if (!($options["property"] & self::FLAG_NON_STATIC)) {
+                    if (!($options[self::METHODS] & self::FLAG_NON_STATIC)) {
                         continue;
                     }
                 }
-                if ($me->class !== $name && !($options["method"] & self::FLAG_INHERITED)) {
+                if ($me->class !== $name && !($options[self::METHODS] & self::FLAG_INHERITED)) {
                     continue; // skip methods from another classes if option do not have a flag FLAG_INHERITED
+                }
+
+                if (isset($filters[self::METHODS]) && !self::filter($me->name, $filters[self::METHODS])) {
+                     continue;
                 }
 
                 $mi = new MethodInfo($class);
@@ -73,20 +80,23 @@ class ClassInfo implements \JsonSerializable
             }
         }
 
-        if (isset($options["property"])) {
-            $flags = self::decodeFlags($options["property"], 0);
+        if (isset($options[self::PROPS])) {
+            $flags = self::decodeFlags($options[self::PROPS], 0);
             foreach ($ce->getProperties($flags) as $prop) {
                 if ($prop->isStatic()) {
-                    if (!($options["property"] & self::FLAG_STATIC)) {
+                    if (!($options[self::PROPS] & self::FLAG_STATIC)) {
                         continue;
                     }
                 } else {
-                    if (!($options["property"] & self::FLAG_NON_STATIC)) {
+                    if (!($options[self::PROPS] & self::FLAG_NON_STATIC)) {
                         continue;
                     }
                 }
-                if ($prop->class !== $name && !($options["property"] & self::FLAG_INHERITED)) {
+                if ($prop->class !== $name && !($options[self::PROPS] & self::FLAG_INHERITED)) {
                     continue; // skip methods from another classes if option do not have a flag FLAG_INHERITED
+                }
+                if (isset($filters[self::PROPS]) && !self::filter($prop->name, $filters[self::PROPS])) {
+                    continue;
                 }
 
                 $pi = new PropertyInfo($class);
@@ -94,8 +104,8 @@ class ClassInfo implements \JsonSerializable
                 $class->addProperty($pi);
             }
 
-            if ($options["property"] & self::FLAG_DOCBLOCK && $class->hasOption("property")) {
-                foreach ($class->getOptions("property") as $val) {
+            if ($options[self::PROPS] & self::FLAG_DOCBLOCK && $class->hasOption(self::PROPS)) {
+                foreach ($class->getOptions(self::PROPS) as $val) {
                     $pi = new PropertyInfo($class);
                     $pi->parseHint($val, $class, false);
                     $class->addProperty($pi);
@@ -104,6 +114,26 @@ class ClassInfo implements \JsonSerializable
         }
 
         return $class;
+    }
+
+    /**
+     * @param string $name
+     * @param mixed $filters
+     *
+     * @return bool
+     */
+    private static function filter(string $name, $filters) : bool
+    {
+        if (is_array($filters)) {
+            foreach ($filters as $filter) {
+                if (fnmatch($filter, $name)) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return fnmatch($filters, $name);
+        }
     }
 
     private static function decodeFlags(int $flags, int $start = 0) : int {
