@@ -128,9 +128,6 @@ class HandlerTest extends TestCase
 			["option", true, 'v1', HandlerTest::class . '::options'],
 			["option", false, 'v3', HandlerTest::class . '::options'],
 
-			["equals", true, 'v3', 'v3'],
-			["equals", false, 'v3', 'v4'],
-
 			["fake", true, 'v3'],
 
 		];

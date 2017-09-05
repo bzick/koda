@@ -7,6 +7,7 @@ use Koda\Error\CallException;
 use Koda\Error\ClassNotFound;
 use Koda\Error\CreateException;
 use Koda\Error\InvalidArgumentException;
+use Koda\Error\PropertyNotFound;
 use Koda\Error\TypeCastingException;
 
 class Error
@@ -46,6 +47,11 @@ class Error
         return $ex;
     }
 
+    public static function propertyNotFound($property)
+    {
+        return new PropertyNotFound("Property {$property} not found");
+    }
+
     /**
      * @param string $method
      *
@@ -61,9 +67,9 @@ class Error
      *
      * @return CallableNotFoundException
      */
-    public static function functionNotFound($method)
+    public static function functionNotFound($function)
     {
-        return new CallableNotFoundException("Function {$method} not found");
+        return new CallableNotFoundException("Function {$function} not found");
     }
 
     /**
@@ -77,13 +83,13 @@ class Error
     }
 
     /**
-     * @param ArgumentInfo $arg
+     * @param VariableInfoAbstract $arg
      * @param string $filter
      * @param \Throwable $error
      *
      * @return InvalidArgumentException
      */
-    public static function filteringFailed(ArgumentInfo $arg, $filter, \Throwable $error = null)
+    public static function filteringFailed(VariableInfoAbstract $arg, $filter, \Throwable $error = null)
     {
         if ($error) {
             $ex = new InvalidArgumentException("Error occurred while filtering of the argument $arg: {$error->getMessage()}",
@@ -112,13 +118,13 @@ class Error
     }
 
     /**
-     * @param ArgumentInfo $arg
+     * @param VariableInfoAbstract $arg
      * @param mixed $value
      * @param mixed $index
      *
      * @return TypeCastingException
      */
-    public static function invalidType(ArgumentInfo $arg, &$value, $index)
+    public static function invalidType(VariableInfoAbstract $arg, &$value, $index)
     {
         $from_type = gettype($value);
         if ($arg->type == "object") {
@@ -172,8 +178,9 @@ class Error
             0, $error
         );
         $ex->argument = $arg;
-        $ex->filter   = self::FILTER_INJECT;
+        $ex->filter   = self::FILTER_FACTORY;
 
         return $ex;
     }
+
 }

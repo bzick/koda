@@ -9,8 +9,9 @@ class MethodInfoTest extends TestCase
 
 	public function testParse()
 	{
-		$method = MethodInfo::scan('Koda\Math', 'hypotenuse');
-		$this->assertSame('Koda\Math', $method->class);
+        $method = new MethodInfo('Koda\Math');
+        $method->import('hypotenuse');
+		$this->assertSame('Koda\Math', $method->class->name);
 		$this->assertSame('hypotenuse', $method->name);
 		$this->assertSame('Koda\Math::hypotenuse', $method->method);
 		$this->assertSame('Calculate hypotenuse', $method->desc);
@@ -67,7 +68,8 @@ class MethodInfoTest extends TestCase
 	 */
 	public function testInvokeSimple($leg1, $leg2, $round, $result)
 	{
-		$method = MethodInfo::scan('Koda\Math', 'hypotenuse');
+        $method = new MethodInfo('Koda\Math');
+        $method->import('hypotenuse');
 		$this->assertEquals($result, $method->invoke([$leg1, $leg2, $round]));
 		$this->assertEquals($result, $method->invoke(["leg2" => $leg2, "leg1" => $leg1, "round" => $round]));
 	}
@@ -89,7 +91,8 @@ class MethodInfoTest extends TestCase
 	 */
 	public function testInvokeMulti($nums, $result)
 	{
-		$method = MethodInfo::scan('Koda\Math', 'avg');
+        $method = new MethodInfo('Koda\Math');
+        $method->import('avg');
 		$this->assertEquals($result, $method->invoke(["nums" => $nums]));
 	}
 

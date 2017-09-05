@@ -14,12 +14,18 @@ class PropertyInfo extends VariableInfoAbstract
 
     public function __construct(ClassInfo $class)
     {
-        $this->class = $class->name;
+        $this->class = $class;
     }
 
-    public function import(\ReflectionProperty $prop, \ReflectionClass $rc = null)
+    public function import(\ReflectionProperty $prop, \ReflectionClass $rc = null, $parse_filters = false)
     {
-        $this->class    = $prop->class;
+        if (!$prop instanceof \ReflectionProperty) {
+            try {
+                $prop = new \ReflectionProperty($this->class->name, $prop);
+            } catch (\Exception $e) {
+                throw Error::propertyNotFound($this->class->name . "::" . $prop);
+            }
+        }
         $this->name     = $prop->getName();
         $this->optional = $prop->isDefault();
         if ($prop->isStatic()) {
@@ -39,7 +45,7 @@ class PropertyInfo extends VariableInfoAbstract
                     "type" => $parsed[0],
                     "name" => $this->name,
                     "desc" => ($parsed[1] ?? '')
-                ], new ClassInfo($this->name));
+                ], $this->class, $parse_filters);
             }
         }
     }
@@ -54,5 +60,14 @@ class PropertyInfo extends VariableInfoAbstract
             "default"     => $this->default,
             "desc"        => $this->desc
         ];
+    }
+
+    public function getName($index = null)
+    {
+        if ($index !== null) {
+            return $this->class->name . "::\$" . $this->name;
+        } else {
+            return $this->class->name . "::\$" . $this->name . "[" . $index . "]";
+        }
     }
 }

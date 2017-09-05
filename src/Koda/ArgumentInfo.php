@@ -2,9 +2,6 @@
 
 namespace Koda;
 
-
-use Koda\Error\TypeCastingException;
-
 class ArgumentInfo extends VariableInfoAbstract
 {
     /**
@@ -121,124 +118,6 @@ class ArgumentInfo extends VariableInfoAbstract
         return new ClassInfo($this->name);
     }
 
-    public function getCallableName(): string
-    {
-//        return $this->;
-    }
-
-    /**
-     * Convert value to required type (with validation if verify present)
-     *
-     * @param mixed $value
-     * @param Handler $filter
-     *
-     * @return mixed
-     * @throws Error\InvalidArgumentException
-     * @throws TypeCastingException
-     */
-    public function filter($value, Handler $filter = null)
-    {
-//        $type = gettype($value);
-        $arg = $this;
-        if ($this->multiple && !is_array($value)) {
-            // todo strict mode
-            $value = [$value];
-//            throw Error::invalidType($this, $type);
-        }
-        if ($this->type) {
-            if ($this->multiple) {
-                foreach ($value as $index => &$v) {
-                    $arg->toType($v, $filter, $index);
-                }
-            } else {
-                $this->toType($value, $filter);
-            }
-        }
-        if ($this->filters && $filter) {
-            foreach ($this->filters as $method => $f) {
-                if ($this->multiple) {
-                    foreach ($value as $k => &$item) {
-                        try {
-                            if ($filter->{$method . "Filter"}($item, $f['args'], $this) === false) {
-                                throw Error::filteringFailed($this, $method);
-                            }
-                        } catch (\Exception $e) {
-                            throw Error::filteringFailed($this, $method, $e);
-
-                        }
-                    }
-                } else {
-                    try {
-                        if ($filter->{$method . "Filter"}($value, $f['args'], $this) === false) {
-                            throw Error::filteringFailed($this, $method);
-                        }
-                    } catch (\Exception $e) {
-                        throw Error::filteringFailed($this, $method, $e);
-                    }
-                }
-            }
-        }
-
-        return $value;
-    }
-
-    /**
-     * Type casting
-     *
-     * @param mixed $value
-     * @param Handler $filter
-     * @param mixed $index
-     *
-     * @throws TypeCastingException
-     */
-    public function toType(&$value, Handler $filter = null, $index = null)
-    {
-        $type = gettype($value);
-        switch ($this->type) {
-            case "callable":
-                if (!is_callable($value)) {
-                    throw Error::invalidType($this, $value, $index);
-                }
-
-                return;
-            case "object":
-                if (is_a($value, $this->class_hint)) {
-                    return;
-                } elseif ($filter && $filter->factory) {
-                    $value = $filter->factory($this, $value);
-                    if (!is_a($value, $this->class_hint)) {
-                        throw Error::invalidType($this, $value, $index);
-                    }
-
-                    return;
-                } else {
-                    throw Error::invalidType($this, $value, $index);
-                }
-            case "array":
-                if (!is_array($value)) {
-                    throw Error::invalidType($this, $value, $index);
-                }
-
-                return;
-        }
-        if ($type == "object" || $type == "array") {
-            throw Error::invalidType($this, $value, $index);
-        }
-        switch ($this->type) {
-            case "int":
-            case "float":
-                if (!is_numeric($value)) {
-                    throw Error::invalidType($this, $value, $index);
-                } else {
-                    settype($value, $this->type);
-                }
-                break;
-
-            default:
-                settype($value, $this->type);
-        }
-    }
-
     public function __debugInfo()
     {
         return [
@@ -248,7 +127,44 @@ class ArgumentInfo extends VariableInfoAbstract
             "is_optional" => $this->optional,
             "is_variadic" => $this->variadic,
             "default"     => $this->default,
-            "desc"        => $this->desc
+            "desc"        => $this->desc,
+            "filters"     => $this->filters,
         ];
+    }
+
+    /**
+     * String representation of object
+     * @link  http://php.net/manual/en/serializable.serialize.php
+     * @return string the string representation of the object or null
+     * @since 5.1.0
+     */
+    public function serialize()
+    {
+        return serialize($this->__debugInfo());
+    }
+
+    /**
+     * Constructs the object
+     * @link  http://php.net/manual/en/serializable.unserialize.php
+     *
+     * @param string $serialized <p>
+     *                           The string representation of the object.
+     *                           </p>
+     *
+     * @return void
+     * @since 5.1.0
+     */
+    public function unserialize($serialized)
+    {
+        [
+            "name"        => $this->name,
+            "type"        => $this->type,
+            "class"       => $this->class_hint,
+            "is_optional" => $this->optional,
+            "is_variadic" => $this->variadic,
+            "default"     => $this->default,
+            "desc"        => $this->desc,
+            "filters"     => $this->filters,
+        ] = unserialize($serialized, true);
     }
 }

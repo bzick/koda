@@ -5,7 +5,7 @@ namespace Koda;
 use Koda\Error\BaseException;
 use Koda\Error\InvalidArgumentException;
 
-class ClassInfo implements \JsonSerializable
+class ClassInfo implements \JsonSerializable, \Serializable
 {
     use OptionsTrait;
 
@@ -40,81 +40,8 @@ class ClassInfo implements \JsonSerializable
 	 */
 	public $name;
 	public $namespace;
-	public $class;
 	public $desc = "";
 
-    public static function scan(string $name, array $options = [], array $filters = []) : ClassInfo {
-        try {
-            $ce = new \ReflectionClass($name);
-        } catch (\Exception $e) {
-            throw Error::classNotFound($name);
-        }
-        $class = new static($name);
-        $class->import($ce);
-        if (isset($options[self::METHODS])) {
-            $flags = self::decodeFlags($options[self::METHODS], \ReflectionMethod::IS_FINAL | \ReflectionMethod::IS_ABSTRACT);
-            if (($options[self::METHODS] & self::FLAG_CONSTRUCT) && method_exists($name, "__construct")) {
-                $class->addMethod(MethodInfo::scan($name, "__construct"));
-            }
-            foreach ($ce->getMethods($flags) as $me) {
-                 if ($me->isStatic()) {
-                    if (!($options[self::METHODS] & self::FLAG_STATIC)) {
-                        continue;
-                    }
-                } else {
-                    if (!($options[self::METHODS] & self::FLAG_NON_STATIC)) {
-                        continue;
-                    }
-                }
-                if ($me->class !== $name && !($options[self::METHODS] & self::FLAG_INHERITED)) {
-                    continue; // skip methods from another classes if option do not have a flag FLAG_INHERITED
-                }
-
-                if (isset($filters[self::METHODS]) && !self::filter($me->name, $filters[self::METHODS])) {
-                     continue;
-                }
-
-                $mi = new MethodInfo($class);
-                $mi->import($me);
-                $class->addMethod($mi);
-            }
-        }
-
-        if (isset($options[self::PROPS])) {
-            $flags = self::decodeFlags($options[self::PROPS], 0);
-            foreach ($ce->getProperties($flags) as $prop) {
-                if ($prop->isStatic()) {
-                    if (!($options[self::PROPS] & self::FLAG_STATIC)) {
-                        continue;
-                    }
-                } else {
-                    if (!($options[self::PROPS] & self::FLAG_NON_STATIC)) {
-                        continue;
-                    }
-                }
-                if ($prop->class !== $name && !($options[self::PROPS] & self::FLAG_INHERITED)) {
-                    continue; // skip methods from another classes if option do not have a flag FLAG_INHERITED
-                }
-                if (isset($filters[self::PROPS]) && !self::filter($prop->name, $filters[self::PROPS])) {
-                    continue;
-                }
-
-                $pi = new PropertyInfo($class);
-                $pi->import($prop, $ce);
-                $class->addProperty($pi);
-            }
-
-            if ($options[self::PROPS] & self::FLAG_DOCBLOCK && $class->hasOption(self::PROPS)) {
-                foreach ($class->getOptions(self::PROPS) as $val) {
-                    $pi = new PropertyInfo($class);
-                    $pi->parseHint($val, $class, false);
-                    $class->addProperty($pi);
-                }
-            }
-        }
-
-        return $class;
-    }
 
     /**
      * @param string $name
@@ -122,7 +49,7 @@ class ClassInfo implements \JsonSerializable
      *
      * @return bool
      */
-    private static function filter(string $name, $filters) : bool
+    private static function filterNames(string $name, $filters) : bool
     {
         if (is_array($filters)) {
             foreach ($filters as $filter) {
@@ -146,12 +73,110 @@ class ClassInfo implements \JsonSerializable
     }
 
 	/**
-	 * @param string $class_name
+	 * @param string|object $class
 	 */
-	public function __construct($class_name)
+	public function __construct($class)
 	{
-        $this->name = $class_name;
+	    if (is_object($class)) {
+	        $this->name = get_class($class);
+        } else if(is_string($class)) {
+            $this->name = $class;
+        } else {
+	        throw new \InvalidArgumentException("Given $class is not class name or object");
+        }
 	}
+
+    public function scan(array $options = [], array $filters = []) : ClassInfo {
+        try {
+            $ce = new \ReflectionClass($this->name);
+        } catch (\Exception $e) {
+            throw Error::classNotFound($this->name);
+        }
+        $this->import($ce);
+        if (isset($options[self::METHODS])) {
+            $flags = self::decodeFlags($options[self::METHODS], \ReflectionMethod::IS_FINAL | \ReflectionMethod::IS_ABSTRACT);
+            if (($options[self::METHODS] & self::FLAG_CONSTRUCT) && method_exists($this->name, "__construct")) {
+                $this->addMethod((new MethodInfo($this))->import("__construct"));
+            }
+            foreach ($ce->getMethods($flags) as $me) {
+                if ($me->isStatic()) {
+                    if (!($options[self::METHODS] & self::FLAG_STATIC)) {
+                        continue;
+                    }
+                } else {
+                    if (!($options[self::METHODS] & self::FLAG_NON_STATIC)) {
+                        continue;
+                    }
+                }
+                if ($me->class !== $this->name && !($options[self::METHODS] & self::FLAG_INHERITED)) {
+                    continue; // skip methods from another classes if option do not have a flag FLAG_INHERITED
+                }
+
+                if (isset($filters[self::METHODS]) && !self::filterNames($me->name, $filters[self::METHODS])) {
+                    continue;
+                }
+
+                $mi = new MethodInfo($this);
+                $mi->import($me);
+                $this->addMethod($mi);
+            }
+        }
+
+        if (isset($options[self::PROPS])) {
+            $flags = self::decodeFlags($options[self::PROPS], 0);
+            foreach ($ce->getProperties($flags) as $prop) {
+                if ($prop->isStatic()) {
+                    if (!($options[self::PROPS] & self::FLAG_STATIC)) {
+                        continue;
+                    }
+                } else {
+                    if (!($options[self::PROPS] & self::FLAG_NON_STATIC)) {
+                        continue;
+                    }
+                }
+                if ($prop->class !== $this->name && !($options[self::PROPS] & self::FLAG_INHERITED)) {
+                    continue; // skip methods from another classes if option do not have a flag FLAG_INHERITED
+                }
+                if (isset($filters[self::PROPS]) && !self::filterNames($prop->name, $filters[self::PROPS])) {
+                    continue;
+                }
+
+                $pi = new PropertyInfo($this);
+                $pi->import($prop, $ce);
+                $this->addProperty($pi);
+            }
+
+            if ($options[self::PROPS] & self::FLAG_DOCBLOCK && $this->hasOption(self::PROPS)) {
+                foreach ($this->getOptions(self::PROPS) as $val) {
+                    $pi = new PropertyInfo($this);
+                    $pi->parseHint($val, $this, false);
+                    $this->addProperty($pi);
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    public function serialize()
+    {
+        $ser = [];
+        foreach($this as $prop => $val) {
+            if ($prop[0] === "_") { // skip props begins with _
+                continue;
+            }
+            $ser[$prop] = $val;
+        }
+
+        return serialize($ser);
+    }
+
+    public function unserialize($serialized)
+    {
+        foreach (unserialize($serialized) as $prop => $val) {
+            $this->$prop = $val;
+        }
+    }
 
     /**
      * @param \ReflectionClass|null $class
@@ -190,7 +215,8 @@ class ClassInfo implements \JsonSerializable
 		if (isset($this->methods[$method])) {
 			return $this->methods[$method];
 		} elseif (method_exists($this->name, $method) && $autoscan) {
-			return $this->methods[$method] = MethodInfo::scan($this->name, $method);
+		    $m = new MethodInfo($this);
+			return $this->methods[$method] = $m->import($method);
 		} else {
 			return null;
 		}

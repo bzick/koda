@@ -45,7 +45,9 @@ class ClassInfoTest extends TestCase
 
 
     public function testScan() {
-        $info = ClassInfo::scan(self::class, [
+        $info = new ClassInfo(self::class);
+
+        $info->scan([
             "method" => ClassInfo::FLAG_PUBLIC | ClassInfo::FLAG_PROTECTED | ClassInfo::FLAG_PUBLIC | ClassInfo::FLAG_NON_STATIC,
             "property" => ClassInfo::FLAG_PUBLIC | ClassInfo::FLAG_PROTECTED | ClassInfo::FLAG_PUBLIC | ClassInfo::FLAG_NON_STATIC | ClassInfo::FLAG_DOCBLOCK
         ]);
@@ -72,7 +74,8 @@ class ClassInfoTest extends TestCase
      * @group dev
      */
     public function testProperties() {
-        $info = ClassInfo::scan(self::class, [
+        $info = new ClassInfo(self::class);
+        $info->scan([
             "property" => ClassInfo::FLAG_PUBLIC | ClassInfo::FLAG_NON_STATIC
         ]);
 

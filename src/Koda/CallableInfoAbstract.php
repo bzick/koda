@@ -12,7 +12,14 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
 	public $namespace;
 	public $name;
 	public $desc = "";
+    /**
+     * @var ClassInfo
+     */
 	public $class;
+    /**
+     * @var object
+     */
+	protected $_ctx;
 	/**
 	 * @var ArgumentInfo[]
 	 */
@@ -22,6 +29,8 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
 	 */
 	public $return;
 	public $params  = [];
+
+	abstract public function import($callable);
 
 	public function getDescription()
 	{
@@ -86,15 +95,37 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
     }
 
 	public function hasClass() : bool {
+	    return (bool)$this->class;
+    }
+
+    public function getClassName() : string
+    {
+	    return $this->class->name ?? '';
+    }
+
+    public function getClass() : ClassInfo
+    {
 	    return $this->class;
     }
 
-    public function getClassName() : string {
-	    return $this->class;
+    public function hasContext() : bool
+    {
+        return $this->_ctx || ($this->hasClass() && $this->getClass()->hasContext());
     }
 
-    public function getClass() : ClassInfo {
-	    return new ClassInfo($this->class);
+    public function getContext()
+    {
+	    if ($this->_ctx) {
+            return $this->_ctx;
+        } elseif  ($this->hasClass() && $this->getClass()->hasContext()) {
+	        return $this->getClass()->getContext();
+        }
+        return null;
+    }
+
+    public function setContext($ctx) {
+        $this->_ctx = $ctx;
+        return $this;
     }
 
 	/**

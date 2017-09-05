@@ -8,16 +8,13 @@ use Koda\Error\InvalidArgumentException;
  * Data verification
  * (count 7, value >7, value <=8, count 1..4, file, date %Y-%m-%d, keyword)
  */
-class Handler
+class Handler implements \ArrayAccess
 {
-    public $context;
     public $injector;
     public $factory;
+    public $context;
 
-    public function __construct($context)
-    {
-        $this->context = $context;
-    }
+    protected $_data = [];
 
     /**
      * @param $filters
@@ -92,6 +89,27 @@ class Handler
         $this->factory = $factory;
 
         return $this;
+    }
+
+    /**
+     * Set call context. Returns clone of the handler.
+     *
+     * @param object $ctx
+     *
+     * @return Handler
+     */
+    public function setContext($ctx) : self {
+        $clone = clone $this;
+        $clone->context = $ctx;
+        return $clone;
+    }
+
+    public function hasContext() : bool {
+        return (bool) $this->context;
+    }
+
+    public function getContext() {
+        return $this->context;
     }
 
     /**
@@ -218,6 +236,9 @@ class Handler
     }
 
     /**
+     * Validate email
+     * email -> test@dev.null
+     * email extended -> test@dev.null
      * @param string $value
      * @param string $type
      *
@@ -430,5 +451,69 @@ class Handler
         $options = call_user_func($callback, $value);
 
         return $options && isset($options[$value]);
+    }
+
+    /**
+     * Whether a offset exists
+     * @link  http://php.net/manual/en/arrayaccess.offsetexists.php
+     *
+     * @param mixed $offset <p>
+     *                      An offset to check for.
+     *                      </p>
+     *
+     * @return boolean true on success or false on failure.
+     * </p>
+     * <p>
+     * The return value will be casted to boolean if non-boolean was returned.
+     * @since 5.0.0
+     */
+    public function offsetExists($offset)
+    {
+        return isset($this->_data[$offset]);
+    }
+
+    /**
+     * Offset to retrieve
+     * @link  http://php.net/manual/en/arrayaccess.offsetget.php
+     * @param mixed $offset <p>
+     *                      The offset to retrieve.
+     *                      </p>
+     * @return mixed Can return all value types.
+     * @since 5.0.0
+     */
+    public function offsetGet($offset)
+    {
+        return $this->_data[$offset] ?? null;
+    }
+
+    /**
+     * Offset to set
+     * @link  http://php.net/manual/en/arrayaccess.offsetset.php
+     * @param mixed $offset <p>
+     *                      The offset to assign the value to.
+     *                      </p>
+     * @param mixed $value  <p>
+     *                      The value to set.
+     *                      </p>
+     * @return void
+     * @since 5.0.0
+     */
+    public function offsetSet($offset, $value)
+    {
+        $this->_data[$offset] = $value;
+    }
+
+    /**
+     * Offset to unset
+     * @link  http://php.net/manual/en/arrayaccess.offsetunset.php
+     * @param mixed $offset <p>
+     *                      The offset to unset.
+     *                      </p>
+     * @return void
+     * @since 5.0.0
+     */
+    public function offsetUnset($offset)
+    {
+        unset($this->_data[$offset]);
     }
 }

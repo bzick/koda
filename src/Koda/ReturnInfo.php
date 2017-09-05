@@ -40,6 +40,11 @@ class ReturnInfo extends VariableInfoAbstract
         return $this->class;
     }
 
+    public function getName($index = null)
+    {
+        return $this->cb . " : " . $this->type;
+    }
+
     /**
      * Specify data which should be serialized to JSON
      * @link  http://php.net/manual/en/jsonserializable.jsonserialize.php

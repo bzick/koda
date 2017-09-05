@@ -12,33 +12,14 @@ class MethodInfo extends CallableInfoAbstract
 {
 
 	public $method = '';
-	public $class;
 
-	/**
-	 * Scan method
-	 *
-	 * @param mixed $class class name or object
-	 * @param string $method
-	 *
-	 * @return MethodInfo
-	 * @throws CallableNotFoundException
-	 */
-	public static function scan($class, $method)
-	{
-		try {
-			$me = new \ReflectionMethod($class, $method);
-		} catch (\Exception $e) {
-			throw Error::methodNotFound($class . "::" . $method);
-		}
-		$class = is_string($class) ? $class : get_class($class);
-		$info = new static($class);
-		$info->import($me);
-
-		return $info;
-	}
-
-	public function __construct(string $class_name) {
-        $this->class  = $class_name;
+	public function __construct($class)
+    {
+	    if (is_string($class)) {
+            $this->class  = new ClassInfo($class);
+        } else {
+            $this->class  = $class;
+        }
     }
 
     public function getMethodName() : string {
@@ -50,14 +31,22 @@ class MethodInfo extends CallableInfoAbstract
     }
 
     /**
-	 * Import method from reflection
-	 *
-	 * @param \ReflectionMethod $method
-	 *
-	 * @return static
-	 */
-	public function import(\ReflectionMethod $method)
+     * Import method from reflection
+     *
+     * @param \ReflectionMethod|string $method
+     *
+     * @return $this
+     * @throws CallableNotFoundException
+     */
+	public function import($method)
 	{
+	    if (!$method instanceof \ReflectionMethod) {
+            try {
+                $method = new \ReflectionMethod($this->class->name, $method);
+            } catch (\Throwable $e) {
+                throw Error::methodNotFound($this->class->name . "::" . $method);
+            }
+        }
 		$this->name   = $method->name;
 		$this->method = $method->class . "::" . $method->name;
 		$this->_importFromReflection($method);
@@ -65,8 +54,9 @@ class MethodInfo extends CallableInfoAbstract
 		return $this;
 	}
 
-	public function getClass() : ClassInfo {
-	    return new ClassInfo($this->class);
+	public function getClass() : ClassInfo
+    {
+        return $this->class;
     }
 
 	/**
@@ -81,11 +71,15 @@ class MethodInfo extends CallableInfoAbstract
 	public function invoke(array $params, Handler $filter = null)
 	{
 		if (!$filter) {
-			$filter = \Koda::getFilter($this->name);
+			$filter = \Koda::getFilter($this->method);
 		}
 		$args = $this->filterArgs($params, $filter);
         try {
-            return call_user_func_array([$filter->context ?: $this->class, $this->method], $args);
+            if ($filter->hasContext()) {
+                return $filter->getContext()->{$this->name}(...$args);
+            } else {
+                return $this->getClassName()::{$this->name}(...$args);
+            }
         } catch (BaseException $error) {
 	        throw $error;
         } catch (\TypeError $error) {

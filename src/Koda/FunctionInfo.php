@@ -17,21 +17,27 @@ class FunctionInfo extends CallableInfoAbstract
      * @return self
      * @throws CallableNotFoundException
      */
-    public static function scan($name)
+    public function scan($name)
     {
         try {
             $fe = new \ReflectionFunction($name);
         } catch (\Exception $e) {
             throw Error::functionNotFound($name);
         }
-        $info = new static;
-        $info->import($fe);
+        $this->import($fe);
 
-        return $info;
+        return $this;
     }
 
-    public function import(\ReflectionFunction $function)
+    public function import($function)
     {
+        if (!$function instanceof \ReflectionFunction) {
+            try {
+                $function = new \ReflectionFunction($function);
+            } catch (\Throwable $e) {
+                throw Error::functionNotFound($function);
+            }
+        }
         $this->name      = $function->name;
         $this->function  = $function->getShortName();
         $this->namespace = $function->getNamespaceName();

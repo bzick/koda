@@ -26,37 +26,41 @@ class Koda
     public static function getMethodInfo($cb)
     {
         if (is_array($cb)) {
-            return Koda\MethodInfo::scan($cb[0], $cb[1]);
+            list($class, $cb) = $cb;
+            $callable = new MethodInfo(new ClassInfo($class));
         } elseif (is_object($cb)) {
             if ($cb instanceof Closure) {
-                return FunctionInfo::scan($cb);
+                $callable = new FunctionInfo();
             } else {
-                return MethodInfo::scan($cb, "__invoke");
+                $callable = new MethodInfo($cb);
             }
         } else {
             if (strpos($cb, '::')) {
-                $cb = explode('::', $cb, 2);
-
-                return MethodInfo::scan($cb[0], $cb[1]);
+                list($class, $cb) = explode('::', $cb, 2);
+                $callable = new MethodInfo(new ClassInfo($class));
             } else {
-                return FunctionInfo::scan($cb);
+                $callable = new FunctionInfo();
             }
         }
+        $callable->import($cb);
+        return $callable;
     }
 
     public static function getFilter($cb, $class_name = \Koda\Handler::class)
     {
+        $handler = new $class_name();
+        /** @var \Koda\Handler $handler */
         if (is_object($cb)) {
             if ($cb instanceof Closure) {
-                return new \Koda\Handler(null);
+                return $handler;
             } else {
-                return new \Koda\Handler($cb);
+                return $handler->setContext($cb);
             }
         } else {
             if (is_array($cb) && is_object($cb[0])) {
-                return new $class_name($cb[0]);
+                return $handler->setContext($cb[0]);
             } else {
-                return new $class_name(null);
+                return $handler;
             }
         }
     }

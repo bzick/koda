@@ -218,15 +218,16 @@ class ArgumentTest extends TestCase
     /**
      * @dataProvider providerCast
      *
-     * @param string $method
+     * @param string $method_name
      * @param mixed $result
      * @param array $args
      *
      * @throws \Throwable
      */
-    public function testCast($method, $result, ...$args)
+    public function testCast($method_name, $result, ...$args)
     {
-        $method = MethodInfo::scan('Koda\Samples', $method);
+        $method = new MethodInfo(new ClassInfo(Samples::class));
+        $method->import($method_name);
 
         try {
             $this->assertSame($result, $method->invoke($args));
