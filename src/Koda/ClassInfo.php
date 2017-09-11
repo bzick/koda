@@ -5,7 +5,7 @@ namespace Koda;
 use Koda\Error\BaseException;
 use Koda\Error\InvalidArgumentException;
 
-class ClassInfo implements \JsonSerializable, \Serializable
+class ClassInfo implements \JsonSerializable
 {
     use OptionsTrait;
 
@@ -156,26 +156,6 @@ class ClassInfo implements \JsonSerializable, \Serializable
         }
 
         return $this;
-    }
-
-    public function serialize()
-    {
-        $ser = [];
-        foreach($this as $prop => $val) {
-            if ($prop[0] === "_") { // skip props begins with _
-                continue;
-            }
-            $ser[$prop] = $val;
-        }
-
-        return serialize($ser);
-    }
-
-    public function unserialize($serialized)
-    {
-        foreach (unserialize($serialized) as $prop => $val) {
-            $this->$prop = $val;
-        }
     }
 
     /**

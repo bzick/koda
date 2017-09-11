@@ -131,40 +131,4 @@ class ArgumentInfo extends VariableInfoAbstract
             "filters"     => $this->filters,
         ];
     }
-
-    /**
-     * String representation of object
-     * @link  http://php.net/manual/en/serializable.serialize.php
-     * @return string the string representation of the object or null
-     * @since 5.1.0
-     */
-    public function serialize()
-    {
-        return serialize($this->__debugInfo());
-    }
-
-    /**
-     * Constructs the object
-     * @link  http://php.net/manual/en/serializable.unserialize.php
-     *
-     * @param string $serialized <p>
-     *                           The string representation of the object.
-     *                           </p>
-     *
-     * @return void
-     * @since 5.1.0
-     */
-    public function unserialize($serialized)
-    {
-        [
-            "name"        => $this->name,
-            "type"        => $this->type,
-            "class"       => $this->class_hint,
-            "is_optional" => $this->optional,
-            "is_variadic" => $this->variadic,
-            "default"     => $this->default,
-            "desc"        => $this->desc,
-            "filters"     => $this->filters,
-        ] = unserialize($serialized, true);
-    }
 }
