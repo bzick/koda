@@ -41,6 +41,8 @@ class ParseKit
                     }
                 }
             }
+        } else {
+            $parsed["desc"] = [$doc];
         }
 
         return $parsed;

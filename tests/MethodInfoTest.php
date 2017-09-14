@@ -6,6 +6,16 @@ use Koda\Error\InvalidArgumentException;
 class MethodInfoTest extends TestCase
 {
 
+    /**
+     * @group dev
+     */
+    public function testEmptyParams()
+    {
+        $method = new MethodInfo(new ClassInfo(Samples::class));
+        $method->import("noParams");
+
+        $this->assertSame("No one parameter", $method->getDescription());
+    }
 
 	public function testParse()
 	{

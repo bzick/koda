@@ -7,6 +7,14 @@ class Samples
 {
 
     /**
+     * No one parameter
+     */
+    public static function noParams()
+    {
+
+    }
+
+    /**
      * @param int $val
      *
      * @return int
