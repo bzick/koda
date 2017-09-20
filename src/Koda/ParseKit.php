@@ -21,7 +21,7 @@ class ParseKit
     public static function parseDocBlock(string $doc)
     {
         $parsed = [];
-        $doc = preg_replace('/^\s*(\*\s*)+/mS', '', trim($doc, "*/ \t\n\r"));
+        $doc = preg_replace('/^\s*(\*[ \t]*)+/mS', '', trim($doc, "*/ \t\n\r"));
         if (strpos($doc, "@") !== false) {
             $doc = explode("@", $doc, 2);
             if ($doc[0] = trim($doc[0])) {

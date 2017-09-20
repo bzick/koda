@@ -139,25 +139,31 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
 	public function filterArgs(array $params, Handler $filter)
 	{
 		$args = [];
-		foreach ($this->args as $name => $arg) {
-			if ($arg->inject) {
-				$params[$name] = $filter->injection($arg, isset($params[$name]) ? $params[$name] : null);
-			}
-			if (isset($params[$name])) {
-				$param  = $params[$name];
-				$args[] = $arg->filter($param, $filter);
-				unset($params[$name]);
-			} elseif (isset($params[$arg->position])) {
-				$param  = $params[$arg->position];
-				$args[] = $arg->filter($param, $filter);
-				unset($params[$arg->position]);
-			} elseif ($arg->optional) {
-				$args[] = $arg->default;
-				continue;
-			} else {
-				throw Error::argumentRequired($arg);
-			}
-		}
+        foreach ($this->args as $name => $arg) {
+            if ($arg->inject) {
+                $params[$name] = $filter->injection($arg, isset($params[$name]) ? $params[$name] : null);
+            }
+            if ($arg->variadic) {
+                foreach ($params as $param) {
+                    $args[] = $param;
+                }
+                break;
+            }
+            if (isset($params[$name])) {
+                $param  = $params[$name];
+                $args[] = $arg->filter($param, $filter);
+                unset($params[$name]);
+            } elseif (isset($params[$arg->position])) {
+                $param  = $params[$arg->position];
+                $args[] = $arg->filter($param, $filter);
+                unset($params[$arg->position]);
+            } elseif ($arg->optional) {
+                $args[] = $arg->default;
+                continue;
+            } else {
+                throw Error::argumentRequired($arg);
+            }
+        }
 
 		return $args;
 	}
