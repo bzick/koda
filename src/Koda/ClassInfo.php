@@ -192,11 +192,12 @@ class ClassInfo implements \JsonSerializable
      */
 	public function getMethod(string $method, bool $autoscan = false)
 	{
-		if (isset($this->methods[$method])) {
-			return $this->methods[$method];
-		} elseif (method_exists($this->name, $method) && $autoscan) {
+	    $me = strtolower($method);
+		if (isset($this->methods[$me])) {
+			return $this->methods[$me];
+		} elseif (method_exists($this->name, $me) && $autoscan) {
 		    $m = new MethodInfo($this);
-			return $this->methods[$method] = $m->import($method);
+			return $this->methods[$me] = $m->import($method);
 		} else {
 			return null;
 		}
@@ -207,7 +208,7 @@ class ClassInfo implements \JsonSerializable
      */
 	public function addMethod(MethodInfo $method)
     {
-        $this->methods[$method->name] = $method;
+        $this->methods[strtolower($method->name)] = $method;
     }
 
     /**
@@ -216,7 +217,7 @@ class ClassInfo implements \JsonSerializable
      * @return bool
      */
     public function hasMethod(string $method) : bool {
-        return isset($this->methods[$method]);
+        return isset($this->methods[strtolower($method)]);
     }
 
     /**

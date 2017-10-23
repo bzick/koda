@@ -74,22 +74,35 @@ class MethodInfo extends CallableInfoAbstract
 			$filter = \Koda::getFilter($this->method);
 		}
 		$args = $this->filterArgs($params, $filter);
+		return $this->invokeFiltered($args, $filter->getContext());
+	}
+
+    /**
+     * @param array $args
+     * @param object $context
+     * @return mixed
+     * @throws BaseException
+     * @throws Error\CallException
+     * @throws InvalidArgumentException
+     */
+	public function invokeFiltered(array $args, $context = null)
+    {
         try {
-            if ($filter->hasContext()) {
-                return $filter->getContext()->{$this->name}(...$args);
+            if ($context) {
+                return $context->{$this->name}(...$args);
             } else {
                 return $this->getClassName()::{$this->name}(...$args);
             }
         } catch (BaseException $error) {
-	        throw $error;
+            throw $error;
         } catch (\TypeError $error) {
             throw new InvalidArgumentException("Some of the arguments were not converted to the correct type", 0, $error);
         } catch (\ArgumentCountError $error) {
-	        throw new InvalidArgumentException("Too few arguments are passed", 0, $error);
+            throw new InvalidArgumentException("Too few arguments are passed", 0, $error);
         } catch (\Throwable $error) {
             throw Error::methodCallFailed($this, $error);
         }
-	}
+    }
 
 
     public function __debugInfo()
