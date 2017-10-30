@@ -24,6 +24,10 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
 	 * @var ArgumentInfo[]
 	 */
 	public $args = [];
+    /**
+     * @var ArgumentInfo[]
+     */
+	public $args_no = [];
 	/**
 	 * @var ReturnInfo
 	 */
@@ -55,17 +59,25 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
 	public function setArgument(ArgumentInfo $arg) : self
     {
         $this->args[$arg->name] = $arg;
+        $this->args_no[] = $arg;
         return $this;
     }
 
-    public function getArgument($name)
+    /**
+     * @param string|int $name_or_no
+     * @return ArgumentInfo
+     */
+    public function getArgument($name_or_no)
     {
-        if ($this->hasArgument($name)) {
-            return $this->args[$name];
+        if (is_integer($name_or_no) && isset($this->args_no[$name_or_no])) {
+            return $this->args_no[$name_or_no];
+        } else if (is_string($name_or_no) && $this->hasArgument($name_or_no)) {
+            return $this->args[$name_or_no];
         } else {
-            throw new \InvalidArgumentException("Argument $name not found in $this");
+            throw new \InvalidArgumentException("Argument $name_or_no not found in $this");
         }
     }
+
 
     public function setReturn(ReturnInfo $return) : self
     {
@@ -106,21 +118,6 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
     public function getClass() : ClassInfo
     {
 	    return $this->class;
-    }
-
-    public function hasContext() : bool
-    {
-        return $this->_ctx || ($this->hasClass() && $this->getClass()->hasContext());
-    }
-
-    public function getContext()
-    {
-	    if ($this->_ctx) {
-            return $this->_ctx;
-        } elseif  ($this->hasClass() && $this->getClass()->hasContext()) {
-	        return $this->getClass()->getContext();
-        }
-        return null;
     }
 
     public function setContext($ctx) {
@@ -222,8 +219,9 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
             }
 		}
 		foreach ($method->getParameters() as $param) {
-			$this->args[$param->name] = $arg = new ArgumentInfo($this);
+            $arg = new ArgumentInfo($this);
 			$arg->import($param);
+		    $this->setArgument($arg);
 		}
 
 		$this->return = new ReturnInfo($this);
