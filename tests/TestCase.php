@@ -11,5 +11,14 @@ namespace Koda;
 
 class TestCase extends \PHPUnit\Framework\TestCase
 {
-
+    /**
+     * @var Koda
+     */
+    public $koda
+    ;
+    public function setUp()
+    {
+        parent::setUp();
+        $this->koda = new Koda();
+    }
 }

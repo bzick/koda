@@ -25,8 +25,9 @@ class Example {
 	}
 }
 
-$class = new Koda\ClassInfo('Example', Koda\ClassInfo::FLAG_NON_STATIC, "*Calc");
+//$class = new Koda\ClassInfo('Example', Koda\ClassInfo::FLAG_NON_STATIC, "*Calc");
 
-var_dump(json_encode($class, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+//$koda = new Koda\Koda();
+//var_dump(json_encode($class, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 //var_dump(Koda::call([new Example(), 'hypotenuseCalc'], ['leg2' => 3, 'leg1' => 4]));
-var_dump(Koda::object(Example::class));
+//var_dump($koda->make(Example::class));

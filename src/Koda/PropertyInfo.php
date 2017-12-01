@@ -12,18 +12,25 @@ class PropertyInfo extends VariableInfoAbstract
      */
     public $class;
 
-    public function __construct(ClassInfo $class)
+    public function __construct(string $class)
     {
         $this->class = $class;
     }
 
-    public function import(\ReflectionProperty $prop, \ReflectionClass $rc = null, $parse_filters = false)
+    /**
+     * @param string|\ReflectionProperty $prop
+     * @param \ReflectionClass|null $rc
+     * @param bool $parse_filters
+     *
+     * @throws Error\PropertyNotFound
+     */
+    public function import($prop, \ReflectionClass $rc = null, $parse_filters = false)
     {
         if (!$prop instanceof \ReflectionProperty) {
             try {
-                $prop = new \ReflectionProperty($this->class->name, $prop);
+                $prop = new \ReflectionProperty($this->name, $prop);
             } catch (\Exception $e) {
-                throw Error::propertyNotFound($this->class->name . "::" . $prop);
+                throw Error::propertyNotFound($this->name . "::" . $prop);
             }
         }
         $this->name     = $prop->getName();

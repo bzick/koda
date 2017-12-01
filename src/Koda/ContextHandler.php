@@ -8,7 +8,7 @@ use Koda\Error\InvalidArgumentException;
  * Data verification
  * (count 7, value >7, value <=8, count 1..4, file, date %Y-%m-%d, keyword)
  */
-class Handler implements \ArrayAccess
+class ContextHandler implements \ArrayAccess
 {
     public $injector;
     public $factory;
@@ -16,66 +16,6 @@ class Handler implements \ArrayAccess
 
     protected $_data = [];
 
-    /**
-     * @param $filters
-     *
-     * @return array
-     */
-    public static function parseDoc($filters)
-    {
-        $verify = [];
-        if (preg_match_all('!((.*?):?(\s+.*?)?),\s*!S', $filters . ',', $m)) {
-            foreach ($m[2] as $k => $filter) {
-                $arg = trim($m[3][$k]);
-                if ($arg) {
-                    if ($filter == "variants") {
-                        if (is_callable($arg)) {
-                            $args = call_user_func($arg);
-                        } else {
-                            $args = preg_split('/\s+/', trim($arg));
-                        }
-                    } elseif (preg_match('!^(?<interval>(?<interval_from>\d+)\.\.(?<interval_to>\d+))|(?<range>(?<range_sign>[\>\<]\=?)\s*(?<range_value>\d+))$!S',
-                        $arg, $args)) {
-                        if ($args['interval']) {
-                            $args = [$args['interval_from'] * 1, $args['interval_to'] * 1];
-                        } elseif ($args['range']) {
-                            switch ($args['range_sign']) {
-                                case '<':
-                                    $args = [-PHP_INT_MAX, $args['range_value'] - 1];
-                                    break;
-                                case '<=':
-                                    $args = [-PHP_INT_MAX, $args['range_value']];
-                                    break;
-                                case '>':
-                                    $args = [$args['range_value'] + 1, PHP_INT_MAX];
-                                    break;
-                                case '>=':
-                                    $args = [$args['range_value'], PHP_INT_MAX];
-                                    break;
-                                case '=':
-                                    $args = [$args['range_value'], $args['range_value']];
-                                    break;
-                                default:
-                                    continue;
-                            }
-                        } else {
-                            $args = $arg;
-                        }
-                    } else {
-                        $args = $arg;
-                    }
-                } else {
-                    $args = "";
-                }
-                $verify[$filter] = [
-                    "original" => $m[1][$k],
-                    "args"     => $args
-                ];
-            }
-        }
-
-        return $verify;
-    }
 
     public function setInjector(callable $injector)
     {
@@ -96,7 +36,7 @@ class Handler implements \ArrayAccess
      *
      * @param object $ctx
      *
-     * @return Handler
+     * @return ContextHandler
      */
     public function setContext($ctx) : self {
         $clone = clone $this;

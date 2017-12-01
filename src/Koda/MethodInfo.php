@@ -3,7 +3,6 @@
 namespace Koda;
 
 
-use Koda\Error;
 use Koda\Error\BaseException;
 use Koda\Error\CallableNotFoundException;
 use Koda\Error\InvalidArgumentException;
@@ -12,21 +11,20 @@ class MethodInfo extends CallableInfoAbstract
 {
 
 	public $method = '';
+	public $modifiers = 0;
 
-	public function __construct($class)
+	public function __construct(string $class)
     {
-	    if (is_string($class)) {
-            $this->class  = new ClassInfo($class);
-        } else {
-            $this->class  = $class;
-        }
+        $this->class = $class;
     }
 
-    public function getMethodName() : string {
+    public function getMethodName() : string
+    {
         return $this->method;
     }
 
-    public function setMethodName(string $name) {
+    public function setMethodName(string $name)
+    {
         $this->method = $name;
     }
 
@@ -42,39 +40,39 @@ class MethodInfo extends CallableInfoAbstract
 	{
 	    if (!$method instanceof \ReflectionMethod) {
             try {
-                $method = new \ReflectionMethod($this->class->name, $method);
+                $method = new \ReflectionMethod($this->class, $method);
             } catch (\Throwable $e) {
-                throw Error::methodNotFound($this->class->name . "::" . $method);
+                throw Error::methodNotFound($this->class . "::" . $method);
             }
         }
-		$this->name   = $method->name;
-		$this->method = $method->class . "::" . $method->name;
-		$this->_importFromReflection($method);
+		$this->name      = $method->name;
+		$this->method    = $method->class . "::" . $method->name;
+        $this->modifiers = $method->getModifiers();
+        $this->_importFromReflection($method);
 
 		return $this;
 	}
-
-	public function getClass() : ClassInfo
-    {
-        return $this->class;
-    }
 
 	/**
 	 * Invoke method
 	 *
 	 * @param array $params
-	 * @param Handler $filter
+	 * @param ContextHandler $filter
 	 *
 	 * @return mixed
 	 * @throws BaseException
 	 */
-	public function invoke(array $params, Handler $filter = null)
+	public function invoke(array $params, ContextHandler $filter = null)
 	{
 		if (!$filter) {
-			$filter = \Koda::getFilter($this->method);
+			$filter = new ContextHandler();
 		}
-		$args = $this->filterArgs($params, $filter);
-		return $this->invokeFiltered($args, $filter->getContext());
+		if ($this->args) {
+            $args = $this->filterArgs($params, $filter);
+            return $this->invokeFiltered($args, $filter->getContext());
+        } else {
+            return $this->invokeFiltered($params, $filter->getContext());
+        }
 	}
 
     /**
@@ -91,7 +89,8 @@ class MethodInfo extends CallableInfoAbstract
             if ($context) {
                 return $context->{$this->name}(...$args);
             } else {
-                return $this->getClassName()::{$this->name}(...$args);
+                $class = $this->class;
+                return $class::{$this->name}(...$args);
             }
         } catch (BaseException $error) {
             throw $error;
