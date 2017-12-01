@@ -110,30 +110,21 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
 	    return (bool)$this->class;
     }
 
-    public function getClassName() : string
-    {
-	    return $this->class->name ?? '';
-    }
-
-    public function getClass() : ClassInfo
+    public function getClass() : string
     {
 	    return $this->class;
     }
 
-    public function setContext($ctx) {
-        $this->_ctx = $ctx;
-        return $this;
-    }
 
 	/**
 	 * @param array $params
-	 * @param Handler $filter
+	 * @param ContextHandler $filter
 	 *
 	 * @return array
 	 * @throws \Koda\Error\TypeCastingException
 	 * @throws InvalidArgumentException
 	 */
-	public function filterArgs(array $params, Handler $filter)
+	public function filterArgs(array $params, ContextHandler $filter)
 	{
 		$args = [];
         foreach ($this->args as $name => $arg) {
@@ -169,12 +160,12 @@ abstract class CallableInfoAbstract  implements \JsonSerializable
 	 * Invoke callback
 	 *
 	 * @param array $params
-	 * @param Handler $filter
+	 * @param ContextHandler $filter
 	 *
 	 * @return mixed
 	 * @throws \Koda\Error\TypeCastingException
 	 */
-	abstract public function invoke(array $params, Handler $filter);
+	abstract public function invoke(array $params, ContextHandler $filter);
 	abstract public function __debugInfo();
 
 	/**

@@ -60,14 +60,13 @@ DOC
      * @param $cb
      * @param $args
      * @param $result
-     * @param array $options
      *
      * @throws \Exception
      */
-    public function testCall($cb, $args, $result, $options = [])
+    public function testCall($cb, $args, $result)
     {
         try {
-            $this->assertEquals($result, \Koda::call($cb, $args, $options));
+            $this->assertEquals($result, $this->koda->call($cb, $args));
         } catch (\Exception $e) {
             if ($result instanceof \Exception) {
                 $this->assertInstanceOf(get_class($result), $e);
@@ -81,17 +80,15 @@ DOC
      * @group dev
      */
     public function testObject() {
-        $object = \Koda::object(Samples::class, ["index" => 16]);
+        $object = $this->koda->make(Samples::class, ["index" => 16]);
         $this->assertEquals(new Samples(), $object);
-
-        $object = \Koda::object(SampleObject::class, ["index" => 16, "factory" => 64, "inject" => 3], [
-            "injector" => function(ArgumentInfo $info, $value) {
-                return $value . "2";
-            },
-            "factory" => function(ArgumentInfo $info, $value) {
-                return new \ArrayObject(["param" => $value]);
-            }
-        ]);
+        $this->koda->setInjector(function(ArgumentInfo $info, $value) {
+            return $value . "2";
+        });
+        $this->koda->setFactory(function(ArgumentInfo $info, $value) {
+            return new \ArrayObject(["param" => $value]);
+        });
+        $object = $this->koda->make(SampleObject::class, ["index" => 16, "factory" => 64, "inject" => 3]);
         $this->assertEquals(new SampleObject(16, 32, new \ArrayObject(["param" => 64])), $object);
     }
 }

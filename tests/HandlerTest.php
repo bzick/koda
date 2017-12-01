@@ -25,7 +25,7 @@ class HandlerTest extends TestCase
 
 	public function setUp()
 	{
-		$this->verify = new Handler($this);
+		$this->verify = new ContextHandler($this);
 	}
 
 	public function providerValidators()

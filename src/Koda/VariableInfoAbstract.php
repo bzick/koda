@@ -84,12 +84,12 @@ abstract class VariableInfoAbstract  implements \JsonSerializable
 
     /**
      * @param array|string $hint_info
-     * @param ClassInfo $scope
+     * @param string $scope
      * @param bool $parse_filters
      *
      * @throws InvalidArgumentException
      */
-    public function parseHint($hint_info, ClassInfo $scope = null, bool $parse_filters = true) {
+    public function parseHint($hint_info, string $scope = null, bool $parse_filters = true) {
 
         if (is_string($hint_info)) {
             if (preg_match('/^(.*?)\s+\$(\w+)\s*(?:\(([^\)]+)\))?/mS', $hint_info, $matches)) {
@@ -118,7 +118,7 @@ abstract class VariableInfoAbstract  implements \JsonSerializable
             if($inf["filters"]) {
                 if($parse_filters) {
                     $this->desc .= $inf["desc"];
-                    $this->filters = Handler::parseDoc($inf["filters"]);
+                    $this->filters = ParseKit::parseDoc($inf["filters"]);
                 } else {
                     $this->desc .= $inf["filters"] . ' ' . $inf["desc"];
                 }
@@ -161,7 +161,7 @@ abstract class VariableInfoAbstract  implements \JsonSerializable
         return $this->type;
     }
 
-    public function setType(string $type, ClassInfo $scope = null) : self
+    public function setType(string $type, string $class_name = null) : self
     {
         $this->type = $type;
         if (strpos($this->type, "|")) { // multitype mark as mixed
@@ -175,18 +175,27 @@ abstract class VariableInfoAbstract  implements \JsonSerializable
             $this->multiple = true;
         } else if ($this->type == "mixed") {
             $this->type  = null;
-        } else if ($this->type == "self" && $scope) {
+        } else if ($this->type == "self" && $class_name) {
             $this->type       = "object";
-            $this->class_hint = $scope->name;
+            $this->class_hint = $class_name;
         } else if (!isset(self::SCALARS[$this->type])) { // select class
             if ($this->type{0} === "\\") { // absolute class name
                 $this->class_hint = ltrim($this->type, '\\');
-            } else if($scope) {
-                $this->class_hint = ltrim($scope->namespace . '\\' . $this->type, '\\');
+            } else if($class_name) {
+
+                $this->class_hint = ltrim($class_name->namespace . '\\' . $this->type, '\\');
             }
             $this->type = "object";
         }
         return $this;
+    }
+
+    /**
+     * @param $value
+     */
+    public function setDefaultValue($value)
+    {
+        $this->default = $value;
     }
 
 
@@ -194,13 +203,13 @@ abstract class VariableInfoAbstract  implements \JsonSerializable
      * Convert value to required type (with validation if filter present)
      *
      * @param mixed $value
-     * @param Handler $filter
+     * @param ContextHandler $filter
      *
      * @return mixed
      * @throws Error\InvalidArgumentException
      * @throws TypeCastingException
      */
-    public function filter($value, Handler $filter = null)
+    public function filter($value, ContextHandler $filter = null)
     {
         $arg = $this;
         if ($this->multiple && !is_array($value)) {
@@ -247,12 +256,12 @@ abstract class VariableInfoAbstract  implements \JsonSerializable
      * Type casting
      *
      * @param mixed $value
-     * @param Handler $filter
+     * @param ContextHandler $filter
      * @param mixed $index
      *
      * @throws TypeCastingException
      */
-    public function toType(&$value, Handler $filter = null, $index = null)
+    public function toType(&$value, ContextHandler $filter = null, $index = null)
     {
         $type = gettype($value);
         switch ($this->type) {

@@ -41,6 +41,11 @@ class ClassInfo implements \JsonSerializable
 	public $name;
 	public $namespace;
 	public $desc = "";
+    /**
+     * Class aliases from use statement
+     * @var string[]
+     */
+	public $aliases = [];
 
 
     /**
@@ -82,7 +87,7 @@ class ClassInfo implements \JsonSerializable
         } else if(is_string($class)) {
             $this->name = $class;
         } else {
-	        throw new \InvalidArgumentException("Given $class is not class name or object");
+	        throw new \InvalidArgumentException("Given argument is not class name or object");
         }
 	}
 
@@ -141,15 +146,15 @@ class ClassInfo implements \JsonSerializable
                     continue;
                 }
 
-                $pi = new PropertyInfo($this);
+                $pi = new PropertyInfo($this->name);
                 $pi->import($prop, $ce);
                 $this->addProperty($pi);
             }
 
             if ($options[self::PROPS] & self::FLAG_DOCBLOCK && $this->hasOption(self::PROPS)) {
                 foreach ($this->getOptions(self::PROPS) as $val) {
-                    $pi = new PropertyInfo($this);
-                    $pi->parseHint($val, $this, false);
+                    $pi = new PropertyInfo($this->name);
+                    $pi->parseHint($val, $this->name, false);
                     $this->addProperty($pi);
                 }
             }
@@ -196,7 +201,7 @@ class ClassInfo implements \JsonSerializable
 		if (isset($this->methods[$me])) {
 			return $this->methods[$me];
 		} elseif (method_exists($this->name, $me) && $autoscan) {
-		    $m = new MethodInfo($this);
+		    $m = new MethodInfo($this->name);
 			return $this->methods[$me] = $m->import($method);
 		} else {
 			return null;
@@ -263,16 +268,19 @@ class ClassInfo implements \JsonSerializable
 
     /**
      * @param array $args
-     * @param Handler|null $filter
+     * @param ContextHandler|null $filter
      *
      * @return mixed
      * @throws BaseException
      * @throws Error\CreateException
      * @throws InvalidArgumentException
      */
-	public function createInstance(array $args, Handler $filter = null)
+	public function make(array $args, ContextHandler $filter = null)
 	{
 	    $class_name = $this->name;
+	    if (!$filter) {
+            $filter = new ContextHandler();
+        }
 	    $c = $this->getMethod("__construct", true);
 	    try {
             if ($c && $c->hasArguments()) {

@@ -21,7 +21,7 @@ class MethodInfoTest extends TestCase
 	{
         $method = new MethodInfo('Koda\Math');
         $method->import('hypotenuse');
-		$this->assertSame('Koda\Math', $method->class->name);
+		$this->assertSame('Koda\Math', $method->class);
 		$this->assertSame('hypotenuse', $method->name);
 		$this->assertSame('Koda\Math::hypotenuse', $method->method);
 		$this->assertSame('Calculate hypotenuse', $method->desc);
@@ -108,27 +108,25 @@ class MethodInfoTest extends TestCase
 
 
 	public function testInject() {
-        $result = \Koda::call([Samples::class, "doInjection"], ["param" => 3], [
-            "injector" => function(ArgumentInfo $info, $value) {
-                $this->assertSame(3, $value);
-                $this->assertSame("age", $info->inject);
-                $this->assertSame("param", $info->name);
-                return $value . "2";
-            }
-        ]);
+        $this->koda->setInjector(function(ArgumentInfo $info, $value) {
+            $this->assertSame(3, $value);
+            $this->assertSame("age", $info->inject);
+            $this->assertSame("param", $info->name);
+            return $value . "2";
+        });
+        $result = $this->koda->call([Samples::class, "doInjection"], ["param" => 3]);
 
         $this->assertEquals(32, $result);
     }
 
 
     public function testFactory() {
-        $result = \Koda::call([Samples::class, "doFactory"], ["param" => 32], [
-            "factory" => function(ArgumentInfo $info, $value) {
-                $this->assertSame(32, $value);
-                $this->assertSame("param", $info->name);
-                return new \ArrayObject(["param" => $value, "extra" => 16]);
-            }
-        ]);
+        $this->koda->setFactory(function(ArgumentInfo $info, $value) {
+            $this->assertSame(32, $value);
+            $this->assertSame("param", $info->name);
+            return new \ArrayObject(["param" => $value, "extra" => 16]);
+        });
+        $result = $this->koda->call([Samples::class, "doFactory"], ["param" => 32]);
 
         $this->assertEquals(new \ArrayObject(["param" => 32, "extra" => 16]), $result);
     }
@@ -154,10 +152,10 @@ class MethodInfoTest extends TestCase
      */
     public function testRanges($values, $success) {
         if($success) {
-            $this->assertTrue(\Koda::call([Samples::class, "ranges"], $values));
+            $this->assertTrue($this->koda->call([Samples::class, "ranges"], $values));
         } else {
             try {
-                \Koda::call([Samples::class, "ranges"], $values);
+                $this->koda->call([Samples::class, "ranges"], $values);
                 $this->fail("Should fail");
             } catch(InvalidArgumentException $e) {
 

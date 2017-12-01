@@ -1,7 +1,7 @@
 {
   "name": "koda/koda",
   "description": "Utility classes for analyse code and invoking callables with verification of arguments and type casting",
-  "keywords": ["invoke", "analyse", "call", "validation", "cast", "call_user_func", "call_user_func_array", "reflection"],
+  "keywords": ["invoker", "analyse", "call", "validation", "cast", "call_user_func", "call_user_func_array", "reflection"],
   "license": "MIT",
   "authors": [
 	{
@@ -18,8 +18,8 @@
 
   },
   "autoload": {
-	"psr-0": {
-	  "Koda": "src/"
+	"psr-4": {
+	  "Koda\\": "src/"
 	}
   },
   "autoload-dev": {
